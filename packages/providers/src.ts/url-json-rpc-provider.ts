@@ -1,4 +1,3 @@
-
 "use strict";
 
 import { Network, Networkish } from "@ethersproject/networks";
@@ -32,7 +31,7 @@ export class StaticJsonRpcProvider extends JsonRpcProvider {
             network = await super.detectNetwork();
 
             if (!network) {
-                logger.throwError("no network detected", Logger.errors.UNKNOWN_ERROR, { });
+                logger.throwError("no network detected", Logger.errors.UNKNOWN_ERROR, {});
             }
 
             // If still not set, set it
@@ -61,7 +60,7 @@ export abstract class UrlJsonRpcProvider extends StaticJsonRpcProvider implement
 
         super(connection, network);
 
-        if (typeof(apiKey) === "string") {
+        if (typeof apiKey === "string") {
             defineReadOnly(this, "apiKey", apiKey);
         } else if (apiKey != null) {
             Object.keys(apiKey).forEach((key) => {
@@ -79,11 +78,9 @@ export abstract class UrlJsonRpcProvider extends StaticJsonRpcProvider implement
     }
 
     getSigner(address?: string): JsonRpcSigner {
-        return logger.throwError(
-            "API provider does not support signing",
-            Logger.errors.UNSUPPORTED_OPERATION,
-            { operation: "getSigner" }
-        );
+        return logger.throwError("API provider does not support signing", Logger.errors.UNSUPPORTED_OPERATION, {
+            operation: "getSigner",
+        });
     }
 
     listAccounts(): Promise<Array<string>> {
@@ -100,7 +97,7 @@ export abstract class UrlJsonRpcProvider extends StaticJsonRpcProvider implement
     // or transformations can be done there.
     static getUrl(network: Network, apiKey: any): string | ConnectionInfo {
         return logger.throwError("not implemented; sub-classes must override getUrl", Logger.errors.NOT_IMPLEMENTED, {
-            operation: "getUrl"
+            operation: "getUrl",
         });
     }
 }

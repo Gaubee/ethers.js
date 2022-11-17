@@ -6,7 +6,6 @@ import { hexZeroPad } from "@ethersproject/bytes";
 import { Coder, Reader, Writer } from "./abstract-coder";
 
 export class AddressCoder extends Coder {
-
     constructor(localName: string) {
         super("address", "address", localName, false);
     }
@@ -17,7 +16,7 @@ export class AddressCoder extends Coder {
 
     encode(writer: Writer, value: string): number {
         try {
-            value = getAddress(value)
+            value = getAddress(value);
         } catch (error) {
             this._throwError(error.message, value);
         }
@@ -28,4 +27,3 @@ export class AddressCoder extends Coder {
         return getAddress(hexZeroPad(reader.readValue().toHexString(), 20));
     }
 }
-

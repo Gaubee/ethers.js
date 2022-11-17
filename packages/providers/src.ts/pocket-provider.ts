@@ -11,33 +11,28 @@ import { UrlJsonRpcProvider } from "./url-json-rpc-provider";
 
 const defaultApplicationId = "62e1ad51b37b8e00394bda3b";
 
-
 export class PocketProvider extends UrlJsonRpcProvider {
     readonly applicationId: string;
     readonly applicationSecretKey: string;
     readonly loadBalancer: boolean;
 
     static getApiKey(apiKey: any): any {
-        const apiKeyObj: { applicationId: string, applicationSecretKey: string, loadBalancer: boolean } = {
+        const apiKeyObj: { applicationId: string; applicationSecretKey: string; loadBalancer: boolean } = {
             applicationId: null,
             loadBalancer: true,
-            applicationSecretKey: null
+            applicationSecretKey: null,
         };
 
         // Parse applicationId and applicationSecretKey
         if (apiKey == null) {
             apiKeyObj.applicationId = defaultApplicationId;
-
-        } else if (typeof (apiKey) === "string") {
+        } else if (typeof apiKey === "string") {
             apiKeyObj.applicationId = apiKey;
-
         } else if (apiKey.applicationSecretKey != null) {
             apiKeyObj.applicationId = apiKey.applicationId;
             apiKeyObj.applicationSecretKey = apiKey.applicationSecretKey;
-
         } else if (apiKey.applicationId) {
             apiKeyObj.applicationId = apiKey.applicationId;
-
         } else {
             logger.throwArgumentError("unsupported PocketProvider apiKey", "apiKey", apiKey);
         }
@@ -72,22 +67,22 @@ export class PocketProvider extends UrlJsonRpcProvider {
             default:
                 logger.throwError("unsupported network", Logger.errors.INVALID_ARGUMENT, {
                     argument: "network",
-                    value: network
+                    value: network,
                 });
         }
 
-        const url = `https:/\/${ host }/v1/lb/${ apiKey.applicationId }`
+        const url = `https:/\/${host}/v1/lb/${apiKey.applicationId}`;
 
-        const connection: ConnectionInfo = { headers: { }, url };
+        const connection: ConnectionInfo = { headers: {}, url };
         if (apiKey.applicationSecretKey != null) {
             connection.user = "";
-            connection.password = apiKey.applicationSecretKey
+            connection.password = apiKey.applicationSecretKey;
         }
 
         return connection;
     }
 
     isCommunityResource(): boolean {
-        return (this.applicationId === defaultApplicationId);
+        return this.applicationId === defaultApplicationId;
     }
 }

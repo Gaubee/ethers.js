@@ -1,24 +1,24 @@
 #!/usr/bin/env node
 
-'use strict';
+"use strict";
 
-import fs from 'fs';
+import fs from "fs";
 import { join as pathJoin } from "path";
 
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
 
-import { ArgParser, CLI, Help, Plugin } from '../cli';
+import { ArgParser, CLI, Help, Plugin } from "../cli";
 import { header as Header, generate as generateTypeScript } from "../typescript";
 import { compile, ContractCode } from "../solc";
 
 function computeHash(content: string): string {
-    let bareContent = content.replace(/\/\*\* Content Hash: 0x[0-9A-F]{64} \*\//i, '/** Content Hash: */');
+    let bareContent = content.replace(/\/\*\* Content Hash: 0x[0-9A-F]{64} \*\//i, "/** Content Hash: */");
     return ethers.utils.id(bareContent);
 }
 
 function checkHash(content: string): boolean {
     let match = content.match(/\/\*\* Content Hash: (0x[0-9A-F]{64}) \*\//i);
-    return (match && match[1] === computeHash(content));
+    return match && match[1] === computeHash(content);
 }
 
 function addContentHash(content: string): string {
@@ -29,7 +29,9 @@ function addContentHash(content: string): string {
 function save(path: string, content: string, force?: boolean): boolean {
     if (fs.existsSync(path) && !force) {
         let oldContent = fs.readFileSync(path).toString();
-        if (!checkHash(oldContent)) { return false; }
+        if (!checkHash(oldContent)) {
+            return false;
+        }
     }
     fs.writeFileSync(path, content);
     return true;
@@ -53,11 +55,10 @@ function walkFilenames(filenames: Array<string>): Array<string> {
 let cli = new CLI(null, {
     account: false,
     provider: false,
-    transaction: false
+    transaction: false,
 });
 
 class GeneratePlugin extends Plugin {
-
     filenames: Array<string>;
     output: string;
     force: boolean;
@@ -67,27 +68,27 @@ class GeneratePlugin extends Plugin {
     static getHelp(): Help {
         return {
             name: "FILENAME [ ... ]",
-            help: "Generates a TypeScript file of all Contracts. May specify folders."
+            help: "Generates a TypeScript file of all Contracts. May specify folders.",
         };
     }
     static getOptionHelp(): Array<Help> {
         return [
             {
                 name: "--output FILENAME",
-                help: "Write the output to FILENAME (default: stdout)"
+                help: "Write the output to FILENAME (default: stdout)",
             },
             {
                 name: "--force",
-                help: "Overwrite files if they already exist"
+                help: "Overwrite files if they already exist",
             },
             {
                 name: "--no-optimize",
-                help: "Do not run the solc optimizer"
+                help: "Do not run the solc optimizer",
             },
             {
                 name: "--no-bytecode",
-                help: "Do not include bytecode and Factory methods"
-            }
+                help: "Do not include bytecode and Factory methods",
+            },
         ];
     }
 
@@ -110,17 +111,18 @@ class GeneratePlugin extends Plugin {
         this.filenames = args;
     }
 
-
     async run(): Promise<void> {
         let output = Header;
 
         walkFilenames(this.filenames).forEach((filename) => {
-            if (!filename.match(/\.sol$/)) { return; }
+            if (!filename.match(/\.sol$/)) {
+                return;
+            }
             let contracts: Array<ContractCode> = null;
             let content = fs.readFileSync(filename).toString();
 
             try {
-                 contracts = compile(content, { filename: filename, optimize: this.optimize });
+                contracts = compile(content, { filename: filename, optimize: this.optimize });
             } catch (error) {
                 console.log(error);
                 if ((<any>error).errors) {
@@ -133,7 +135,7 @@ class GeneratePlugin extends Plugin {
             }
 
             contracts.forEach((contract) => {
-                output += generateTypeScript(contract, (this.noBytecode ? null: contract.bytecode));
+                output += generateTypeScript(contract, this.noBytecode ? null : contract.bytecode);
                 output += "\n";
             });
         });
@@ -154,4 +156,4 @@ class GeneratePlugin extends Plugin {
 }
 cli.setPlugin(GeneratePlugin);
 
-cli.run(process.argv.slice(2))
+cli.run(process.argv.slice(2));

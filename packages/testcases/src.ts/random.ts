@@ -3,9 +3,13 @@
 import { ethers } from "ethers";
 
 export function randomBytes(seed: string, lower: number, upper?: number): Uint8Array {
-    if (!upper) { upper = lower; }
+    if (!upper) {
+        upper = lower;
+    }
 
-    if (upper === 0 && upper === lower) { return new Uint8Array(0); }
+    if (upper === 0 && upper === lower) {
+        return new Uint8Array(0);
+    }
 
     let result = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(seed)));
     while (result.length < upper) {

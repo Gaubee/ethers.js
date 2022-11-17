@@ -17,21 +17,21 @@ import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
-const _constructorGuard = { };
+const _constructorGuard = {};
 
 const MAX_SAFE = 0x1fffffffffffff;
-
 
 export type BigNumberish = BigNumber | Bytes | bigint | string | number;
 
 export function isBigNumberish(value: any): value is BigNumberish {
-    return (value != null) && (
-        BigNumber.isBigNumber(value) ||
-        (typeof(value) === "number" && (value % 1) === 0) ||
-        (typeof(value) === "string" && !!value.match(/^-?[0-9]+$/)) ||
-        isHexString(value) ||
-        (typeof(value) === "bigint") ||
-        isBytes(value)
+    return (
+        value != null &&
+        (BigNumber.isBigNumber(value) ||
+            (typeof value === "number" && value % 1 === 0) ||
+            (typeof value === "string" && !!value.match(/^-?[0-9]+$/)) ||
+            isHexString(value) ||
+            typeof value === "bigint" ||
+            isBytes(value))
     );
 }
 
@@ -44,9 +44,13 @@ export class BigNumber implements Hexable {
 
     constructor(constructorGuard: any, hex: string) {
         if (constructorGuard !== _constructorGuard) {
-            logger.throwError("cannot call constructor directly; use BigNumber.from", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "new (BigNumber)"
-            });
+            logger.throwError(
+                "cannot call constructor directly; use BigNumber.from",
+                Logger.errors.UNSUPPORTED_OPERATION,
+                {
+                    operation: "new (BigNumber)",
+                },
+            );
         }
 
         this._hex = hex;
@@ -165,14 +169,14 @@ export class BigNumber implements Hexable {
 
     gt(other: BigNumberish): boolean {
         return toBN(this).gt(toBN(other));
-   }
+    }
 
     gte(other: BigNumberish): boolean {
         return toBN(this).gte(toBN(other));
     }
 
     isNegative(): boolean {
-        return (this._hex[0] === "-");
+        return this._hex[0] === "-";
     }
 
     isZero(): boolean {
@@ -191,10 +195,10 @@ export class BigNumber implements Hexable {
     toBigInt(): bigint {
         try {
             return BigInt(this.toString());
-        } catch (e) { }
+        } catch (e) {}
 
         return logger.throwError("this platform does not support BigInt", Logger.errors.UNSUPPORTED_OPERATION, {
-            value: this.toString()
+            value: this.toString(),
         });
     }
 
@@ -207,9 +211,17 @@ export class BigNumber implements Hexable {
                     logger.warn("BigNumber.toString does not accept any parameters; base-10 is assumed");
                 }
             } else if (arguments[0] === 16) {
-                logger.throwError("BigNumber.toString does not accept any parameters; use bigNumber.toHexString()", Logger.errors.UNEXPECTED_ARGUMENT, { });
+                logger.throwError(
+                    "BigNumber.toString does not accept any parameters; use bigNumber.toHexString()",
+                    Logger.errors.UNEXPECTED_ARGUMENT,
+                    {},
+                );
             } else {
-                logger.throwError("BigNumber.toString does not accept parameters", Logger.errors.UNEXPECTED_ARGUMENT, { });
+                logger.throwError(
+                    "BigNumber.toString does not accept parameters",
+                    Logger.errors.UNEXPECTED_ARGUMENT,
+                    {},
+                );
             }
         }
         return toBN(this).toString(10);
@@ -224,9 +236,11 @@ export class BigNumber implements Hexable {
     }
 
     static from(value: any): BigNumber {
-        if (value instanceof BigNumber) { return value; }
+        if (value instanceof BigNumber) {
+            return value;
+        }
 
-        if (typeof(value) === "string") {
+        if (typeof value === "string") {
             if (value.match(/^-?0x[0-9a-f]+$/i)) {
                 return new BigNumber(_constructorGuard, toHex(value));
             }
@@ -238,7 +252,7 @@ export class BigNumber implements Hexable {
             return logger.throwArgumentError("invalid BigNumber string", "value", value);
         }
 
-        if (typeof(value) === "number") {
+        if (typeof value === "number") {
             if (value % 1) {
                 throwFault("underflow", "BigNumber.from", value);
             }
@@ -252,7 +266,7 @@ export class BigNumber implements Hexable {
 
         const anyValue = <any>value;
 
-        if (typeof(anyValue) === "bigint") {
+        if (typeof anyValue === "bigint") {
             return BigNumber.from(anyValue.toString());
         }
 
@@ -261,14 +275,12 @@ export class BigNumber implements Hexable {
         }
 
         if (anyValue) {
-
             // Hexable interface (takes priority)
             if (anyValue.toHexString) {
                 const hex = anyValue.toHexString();
-                if (typeof(hex) === "string") {
+                if (typeof hex === "string") {
                     return BigNumber.from(hex);
                 }
-
             } else {
                 // For now, handle legacy JSON-ified values (goes away in v6)
                 let hex = anyValue._hex;
@@ -278,7 +290,7 @@ export class BigNumber implements Hexable {
                     hex = anyValue.hex;
                 }
 
-                if (typeof(hex) === "string") {
+                if (typeof hex === "string") {
                     if (isHexString(hex) || (hex[0] === "-" && isHexString(hex.substring(1)))) {
                         return BigNumber.from(hex);
                     }
@@ -296,9 +308,8 @@ export class BigNumber implements Hexable {
 
 // Normalize the hex string
 function toHex(value: string | BN): string {
-
     // For BN, call on the hex string
-    if (typeof(value) !== "string") {
+    if (typeof value !== "string") {
         return toHex(value.toString(16));
     }
 
@@ -308,26 +319,36 @@ function toHex(value: string | BN): string {
         value = value.substring(1);
 
         // Cannot have multiple negative signs (e.g. "--0x04")
-        if (value[0] === "-") { logger.throwArgumentError("invalid hex", "value", value); }
+        if (value[0] === "-") {
+            logger.throwArgumentError("invalid hex", "value", value);
+        }
 
         // Call toHex on the positive component
         value = toHex(value);
 
         // Do not allow "-0x00"
-        if (value === "0x00") { return value; }
+        if (value === "0x00") {
+            return value;
+        }
 
         // Negate the value
         return "-" + value;
     }
 
     // Add a "0x" prefix if missing
-    if (value.substring(0, 2) !== "0x") { value = "0x" + value; }
+    if (value.substring(0, 2) !== "0x") {
+        value = "0x" + value;
+    }
 
     // Normalize zero
-    if (value === "0x") { return "0x00"; }
+    if (value === "0x") {
+        return "0x00";
+    }
 
     // Make the string even length
-    if (value.length % 2) { value = "0x0" + value.substring(2); }
+    if (value.length % 2) {
+        value = "0x0" + value.substring(2);
+    }
 
     // Trim to smallest even-length string
     while (value.length > 4 && value.substring(0, 4) === "0x00") {
@@ -344,24 +365,26 @@ function toBigNumber(value: BN): BigNumber {
 function toBN(value: BigNumberish): BN {
     const hex = BigNumber.from(value).toHexString();
     if (hex[0] === "-") {
-        return (new BN("-" + hex.substring(3), 16));
+        return new BN("-" + hex.substring(3), 16);
     }
     return new BN(hex.substring(2), 16);
 }
 
 function throwFault(fault: string, operation: string, value?: any): never {
     const params: any = { fault: fault, operation: operation };
-    if (value != null) { params.value = value; }
+    if (value != null) {
+        params.value = value;
+    }
 
     return logger.throwError(fault, Logger.errors.NUMERIC_FAULT, params);
 }
 
 // value should have no prefix
 export function _base36To16(value: string): string {
-    return (new BN(value, 36)).toString(16);
+    return new BN(value, 36).toString(16);
 }
 
 // value should have no prefix
 export function _base16To36(value: string): string {
-    return (new BN(value, 16)).toString(36);
+    return new BN(value, 16).toString(36);
 }

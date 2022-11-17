@@ -2,6 +2,4 @@
 
 const IpcProvider: any = null;
 
-export {
-    IpcProvider
-};
+export { IpcProvider };

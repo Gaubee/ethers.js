@@ -3,7 +3,6 @@
 // See: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // See: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
 
-
 import { ExternallyOwnedAccount } from "@ethersproject/abstract-signer";
 import { Base58 } from "@ethersproject/basex";
 import { arrayify, BytesLike, concat, hexDataSlice, hexZeroPad, hexlify } from "@ethersproject/bytes";
@@ -22,7 +21,6 @@ const logger = new Logger(version);
 
 const N = BigNumber.from("0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141");
 
-
 // "Bitcoin seed"
 const MasterSecret = toUtf8Bytes("Bitcoin seed");
 
@@ -30,12 +28,12 @@ const HardenedBit = 0x80000000;
 
 // Returns a byte with the MSB bits set
 function getUpperMask(bits: number): number {
-   return ((1 << bits) - 1) << (8 - bits);
+    return ((1 << bits) - 1) << (8 - bits);
 }
 
 // Returns a byte with the LSB bits set
 function getLowerMask(bits: number): number {
-   return (1 << bits) - 1;
+    return (1 << bits) - 1;
 }
 
 function bytes32(value: BigNumber | Uint8Array): string {
@@ -43,7 +41,7 @@ function bytes32(value: BigNumber | Uint8Array): string {
 }
 
 function base58check(data: Uint8Array): string {
-    return Base58.encode(concat([ data, hexDataSlice(sha256(sha256(data)), 0, 4) ]));
+    return Base58.encode(concat([data, hexDataSlice(sha256(sha256(data)), 0, 4)]));
 }
 
 function getWordlist(wordlist: string | Wordlist): Wordlist {
@@ -51,7 +49,7 @@ function getWordlist(wordlist: string | Wordlist): Wordlist {
         return wordlists["en"];
     }
 
-    if (typeof(wordlist) === "string") {
+    if (typeof wordlist === "string") {
         const words = wordlists[wordlist];
         if (words == null) {
             logger.throwArgumentError("unknown locale", "wordlist", wordlist);
@@ -70,7 +68,7 @@ export interface Mnemonic {
     readonly phrase: string;
     readonly path: string;
     readonly locale: string;
-};
+}
 
 export class HDNode implements ExternallyOwnedAccount {
     readonly privateKey: string;
@@ -96,7 +94,16 @@ export class HDNode implements ExternallyOwnedAccount {
      *   - fromMnemonic
      *   - fromSeed
      */
-    constructor(constructorGuard: any, privateKey: string, publicKey: string, parentFingerprint: string, chainCode: string, index: number, depth: number, mnemonicOrPath: Mnemonic | string) {
+    constructor(
+        constructorGuard: any,
+        privateKey: string,
+        publicKey: string,
+        parentFingerprint: string,
+        chainCode: string,
+        index: number,
+        depth: number,
+        mnemonicOrPath: Mnemonic | string,
+    ) {
         /* istanbul ignore if */
         if (constructorGuard !== _constructorGuard) {
             throw new Error("HDNode constructor cannot be called directly");
@@ -125,12 +132,10 @@ export class HDNode implements ExternallyOwnedAccount {
             // From a source that does not preserve the path (e.g. extended keys)
             defineReadOnly(this, "mnemonic", null);
             defineReadOnly(this, "path", null);
-
-        } else if (typeof(mnemonicOrPath) === "string") {
+        } else if (typeof mnemonicOrPath === "string") {
             // From a source that does not preserve the mnemonic (e.g. neutered)
             defineReadOnly(this, "mnemonic", null);
             defineReadOnly(this, "path", mnemonicOrPath);
-
         } else {
             // From a fully qualified source
             defineReadOnly(this, "mnemonic", mnemonicOrPath);
@@ -145,28 +150,45 @@ export class HDNode implements ExternallyOwnedAccount {
         //   - Mainnet: public=0x0488B21E, private=0x0488ADE4
         //   - Testnet: public=0x043587CF, private=0x04358394
 
-        if (this.depth >= 256) { throw new Error("Depth too large!"); }
+        if (this.depth >= 256) {
+            throw new Error("Depth too large!");
+        }
 
-        return base58check(concat([
-            ((this.privateKey != null) ? "0x0488ADE4": "0x0488B21E"),
-            hexlify(this.depth),
-            this.parentFingerprint,
-            hexZeroPad(hexlify(this.index), 4),
-            this.chainCode,
-            ((this.privateKey != null) ? concat([ "0x00", this.privateKey ]): this.publicKey),
-        ]));
+        return base58check(
+            concat([
+                this.privateKey != null ? "0x0488ADE4" : "0x0488B21E",
+                hexlify(this.depth),
+                this.parentFingerprint,
+                hexZeroPad(hexlify(this.index), 4),
+                this.chainCode,
+                this.privateKey != null ? concat(["0x00", this.privateKey]) : this.publicKey,
+            ]),
+        );
     }
 
     neuter(): HDNode {
-        return new HDNode(_constructorGuard, null, this.publicKey, this.parentFingerprint, this.chainCode, this.index, this.depth, this.path);
+        return new HDNode(
+            _constructorGuard,
+            null,
+            this.publicKey,
+            this.parentFingerprint,
+            this.chainCode,
+            this.index,
+            this.depth,
+            this.path,
+        );
     }
 
     private _derive(index: number): HDNode {
-        if (index > 0xffffffff) { throw new Error("invalid index - " + String(index)); }
+        if (index > 0xffffffff) {
+            throw new Error("invalid index - " + String(index));
+        }
 
         // Base path
         let path = this.path;
-        if (path) { path += "/" + (index & ~HardenedBit); }
+        if (path) {
+            path += "/" + (index & ~HardenedBit);
+        }
 
         const data = new Uint8Array(37);
 
@@ -179,22 +201,25 @@ export class HDNode implements ExternallyOwnedAccount {
             data.set(arrayify(this.privateKey), 1);
 
             // Hardened path
-            if (path) { path += "'"; }
-
+            if (path) {
+                path += "'";
+            }
         } else {
             // Data = ser_p(point(k_par))
             data.set(arrayify(this.publicKey));
         }
 
         // Data += ser_32(i)
-        for (let i = 24; i >= 0; i -= 8) { data[33 + (i >> 3)] = ((index >> (24 - i)) & 0xff); }
+        for (let i = 24; i >= 0; i -= 8) {
+            data[33 + (i >> 3)] = (index >> (24 - i)) & 0xff;
+        }
 
         const I = arrayify(computeHmac(SupportedAlgorithm.sha512, this.chainCode, data));
         const IL = I.slice(0, 32);
         const IR = I.slice(32);
 
         // The private key
-        let ki: string = null
+        let ki: string = null;
 
         // The public key
         let Ki: string = null;
@@ -208,16 +233,25 @@ export class HDNode implements ExternallyOwnedAccount {
 
         let mnemonicOrPath: Mnemonic | string = path;
 
-        const srcMnemonic =  this.mnemonic;
+        const srcMnemonic = this.mnemonic;
         if (srcMnemonic) {
             mnemonicOrPath = Object.freeze({
                 phrase: srcMnemonic.phrase,
                 path: path,
-                locale: (srcMnemonic.locale || "en")
+                locale: srcMnemonic.locale || "en",
             });
         }
 
-        return new HDNode(_constructorGuard, ki, Ki, this.fingerprint, bytes32(IR), index, this.depth + 1, mnemonicOrPath);
+        return new HDNode(
+            _constructorGuard,
+            ki,
+            Ki,
+            this.fingerprint,
+            bytes32(IR),
+            index,
+            this.depth + 1,
+            mnemonicOrPath,
+        );
     }
 
     derivePath(path: string): HDNode {
@@ -227,18 +261,24 @@ export class HDNode implements ExternallyOwnedAccount {
             throw new Error("invalid path - " + path);
         }
 
-        if (components[0] === "m") { components.shift(); }
+        if (components[0] === "m") {
+            components.shift();
+        }
 
         let result: HDNode = this;
         for (let i = 0; i < components.length; i++) {
             const component = components[i];
             if (component.match(/^[0-9]+'$/)) {
                 const index = parseInt(component.substring(0, component.length - 1));
-                if (index >= HardenedBit) { throw new Error("invalid path index - " + component); }
+                if (index >= HardenedBit) {
+                    throw new Error("invalid path index - " + component);
+                }
                 result = result._derive(HardenedBit + index);
             } else if (component.match(/^[0-9]+$/)) {
                 const index = parseInt(component);
-                if (index >= HardenedBit) { throw new Error("invalid path index - " + component); }
+                if (index >= HardenedBit) {
+                    throw new Error("invalid path index - " + component);
+                }
                 result = result._derive(index);
             } else {
                 throw new Error("invalid path component - " + component);
@@ -248,18 +288,27 @@ export class HDNode implements ExternallyOwnedAccount {
         return result;
     }
 
-
     static _fromSeed(seed: BytesLike, mnemonic: Mnemonic): HDNode {
         const seedArray: Uint8Array = arrayify(seed);
-        if (seedArray.length < 16 || seedArray.length > 64) { throw new Error("invalid seed"); }
+        if (seedArray.length < 16 || seedArray.length > 64) {
+            throw new Error("invalid seed");
+        }
 
         const I: Uint8Array = arrayify(computeHmac(SupportedAlgorithm.sha512, MasterSecret, seedArray));
 
-        return new HDNode(_constructorGuard, bytes32(I.slice(0, 32)), null, "0x00000000", bytes32(I.slice(32)), 0, 0, mnemonic);
+        return new HDNode(
+            _constructorGuard,
+            bytes32(I.slice(0, 32)),
+            null,
+            "0x00000000",
+            bytes32(I.slice(32)),
+            0,
+            0,
+            mnemonic,
+        );
     }
 
     static fromMnemonic(mnemonic: string, password?: string, wordlist?: string | Wordlist): HDNode {
-
         // If a locale name was passed in, find the associated wordlist
         wordlist = getWordlist(wordlist);
 
@@ -269,7 +318,7 @@ export class HDNode implements ExternallyOwnedAccount {
         return HDNode._fromSeed(mnemonicToSeed(mnemonic, password), {
             phrase: mnemonic,
             path: "m",
-            locale: wordlist.locale
+            locale: wordlist.locale,
         });
     }
 
@@ -292,13 +341,35 @@ export class HDNode implements ExternallyOwnedAccount {
 
         switch (hexlify(bytes.slice(0, 4))) {
             // Public Key
-            case "0x0488b21e": case "0x043587cf":
-                return new HDNode(_constructorGuard, null, hexlify(key), parentFingerprint, chainCode, index, depth, null);
+            case "0x0488b21e":
+            case "0x043587cf":
+                return new HDNode(
+                    _constructorGuard,
+                    null,
+                    hexlify(key),
+                    parentFingerprint,
+                    chainCode,
+                    index,
+                    depth,
+                    null,
+                );
 
             // Private Key
-            case "0x0488ade4": case "0x04358394 ":
-                if (key[0] !== 0) { break; }
-                return new HDNode(_constructorGuard, hexlify(key.slice(1)), null, parentFingerprint, chainCode, index, depth, null);
+            case "0x0488ade4":
+            case "0x04358394 ":
+                if (key[0] !== 0) {
+                    break;
+                }
+                return new HDNode(
+                    _constructorGuard,
+                    hexlify(key.slice(1)),
+                    null,
+                    parentFingerprint,
+                    chainCode,
+                    index,
+                    depth,
+                    null,
+                );
         }
 
         return logger.throwArgumentError("invalid extended key", "extendedKey", "[REDACTED]");
@@ -306,7 +377,9 @@ export class HDNode implements ExternallyOwnedAccount {
 }
 
 export function mnemonicToSeed(mnemonic: string, password?: string): string {
-    if (!password) { password = ""; }
+    if (!password) {
+        password = "";
+    }
 
     const salt = toUtf8Bytes("mnemonic" + password, UnicodeNormalizationForm.NFKD);
 
@@ -319,24 +392,28 @@ export function mnemonicToEntropy(mnemonic: string, wordlist?: string | Wordlist
     logger.checkNormalize();
 
     const words = wordlist.split(mnemonic);
-    if ((words.length % 3) !== 0) { throw new Error("invalid mnemonic"); }
+    if (words.length % 3 !== 0) {
+        throw new Error("invalid mnemonic");
+    }
 
-    const entropy = arrayify(new Uint8Array(Math.ceil(11 * words.length / 8)));
+    const entropy = arrayify(new Uint8Array(Math.ceil((11 * words.length) / 8)));
 
     let offset = 0;
     for (let i = 0; i < words.length; i++) {
         let index = wordlist.getWordIndex(words[i].normalize("NFKD"));
-        if (index === -1) { throw new Error("invalid mnemonic"); }
+        if (index === -1) {
+            throw new Error("invalid mnemonic");
+        }
 
         for (let bit = 0; bit < 11; bit++) {
             if (index & (1 << (10 - bit))) {
-                entropy[offset >> 3] |= (1 << (7 - (offset % 8)));
+                entropy[offset >> 3] |= 1 << (7 - (offset % 8));
             }
             offset++;
         }
     }
 
-    const entropyBits = 32 * words.length / 3;
+    const entropyBits = (32 * words.length) / 3;
 
     const checksumBits = words.length / 3;
     const checksumMask = getUpperMask(checksumBits);
@@ -355,15 +432,14 @@ export function entropyToMnemonic(entropy: BytesLike, wordlist?: string | Wordli
 
     entropy = arrayify(entropy);
 
-    if ((entropy.length % 4) !== 0 || entropy.length < 16 || entropy.length > 32) {
+    if (entropy.length % 4 !== 0 || entropy.length < 16 || entropy.length > 32) {
         throw new Error("invalid entropy");
     }
 
-    const indices: Array<number> = [ 0 ];
+    const indices: Array<number> = [0];
 
     let remainingBits = 11;
     for (let i = 0; i < entropy.length; i++) {
-
         // Consume the whole byte (with still more to go)
         if (remainingBits > 8) {
             indices[indices.length - 1] <<= 8;
@@ -371,7 +447,7 @@ export function entropyToMnemonic(entropy: BytesLike, wordlist?: string | Wordli
 
             remainingBits -= 8;
 
-        // This byte will complete an 11-bit index
+            // This byte will complete an 11-bit index
         } else {
             indices[indices.length - 1] <<= remainingBits;
             indices[indices.length - 1] |= entropy[i] >> (8 - remainingBits);
@@ -389,7 +465,7 @@ export function entropyToMnemonic(entropy: BytesLike, wordlist?: string | Wordli
 
     // Shift the checksum into the word indices
     indices[indices.length - 1] <<= checksumBits;
-    indices[indices.length - 1] |= (checksum >> (8 - checksumBits));
+    indices[indices.length - 1] |= checksum >> (8 - checksumBits);
 
     return wordlist.join(indices.map((index) => (<Wordlist>wordlist).getWord(index)));
 }
@@ -398,13 +474,13 @@ export function isValidMnemonic(mnemonic: string, wordlist?: Wordlist): boolean 
     try {
         mnemonicToEntropy(mnemonic, wordlist);
         return true;
-    } catch (error) { }
+    } catch (error) {}
     return false;
 }
 
 export function getAccountPath(index: number): string {
-    if (typeof(index) !== "number" || index < 0 || index >= HardenedBit || index % 1) {
+    if (typeof index !== "number" || index < 0 || index >= HardenedBit || index % 1) {
         logger.throwArgumentError("invalid account index", "index", index);
     }
-    return `m/44'/60'/${ index }'/0/0`;
+    return `m/44'/60'/${index}'/0/0`;
 }

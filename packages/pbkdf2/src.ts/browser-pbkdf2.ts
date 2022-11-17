@@ -3,13 +3,19 @@
 import { arrayify, BytesLike, hexlify } from "@ethersproject/bytes";
 import { computeHmac, SupportedAlgorithm } from "@ethersproject/sha2";
 
-export function pbkdf2(password: BytesLike, salt: BytesLike, iterations: number, keylen: number, hashAlgorithm: string): string {
+export function pbkdf2(
+    password: BytesLike,
+    salt: BytesLike,
+    iterations: number,
+    keylen: number,
+    hashAlgorithm: string,
+): string {
     password = arrayify(password);
     salt = arrayify(salt);
     let hLen;
     let l = 1;
-    const DK = new Uint8Array(keylen)
-    const block1 = new Uint8Array(salt.length + 4)
+    const DK = new Uint8Array(keylen);
+    const block1 = new Uint8Array(salt.length + 4);
     block1.set(salt);
     //salt.copy(block1, 0, 0, salt.length)
 
@@ -27,29 +33,26 @@ export function pbkdf2(password: BytesLike, salt: BytesLike, iterations: number,
         let U = arrayify(computeHmac(<SupportedAlgorithm>hashAlgorithm, password, block1));
 
         if (!hLen) {
-            hLen = U.length
-            T = new Uint8Array(hLen)
-            l = Math.ceil(keylen / hLen)
-            r = keylen - (l - 1) * hLen
+            hLen = U.length;
+            T = new Uint8Array(hLen);
+            l = Math.ceil(keylen / hLen);
+            r = keylen - (l - 1) * hLen;
         }
 
         //U.copy(T, 0, 0, hLen)
         T.set(U);
 
-
         for (let j = 1; j < iterations; j++) {
             //U = createHmac(password).update(U).digest();
             U = arrayify(computeHmac(<SupportedAlgorithm>hashAlgorithm, password, U));
-            for (let k = 0; k < hLen; k++) T[k] ^= U[k]
+            for (let k = 0; k < hLen; k++) T[k] ^= U[k];
         }
 
-
-        const destPos = (i - 1) * hLen
-        const len = (i === l ? r : hLen)
+        const destPos = (i - 1) * hLen;
+        const len = i === l ? r : hLen;
         //T.copy(DK, destPos, 0, len)
         DK.set(arrayify(T).slice(0, len), destPos);
     }
 
-    return hexlify(DK)
+    return hexlify(DK);
 }
-

@@ -13,9 +13,8 @@ const logger = new Logger(version);
 const defaultApiKey = "ETHERS_JS_SHARED";
 
 export class NodesmithProvider extends UrlJsonRpcProvider {
-
     static getApiKey(apiKey: any): any {
-        if (apiKey && typeof(apiKey) !== "string") {
+        if (apiKey && typeof apiKey !== "string") {
             logger.throwArgumentError("invalid apiKey", "apiKey", apiKey);
         }
         return apiKey || defaultApiKey;
@@ -42,9 +41,9 @@ export class NodesmithProvider extends UrlJsonRpcProvider {
                 host = "https://ethereum.api.nodesmith.io/v1/kovan/jsonrpc";
                 break;
             default:
-               logger.throwArgumentError("unsupported network", "network", arguments[0]);
+                logger.throwArgumentError("unsupported network", "network", arguments[0]);
         }
 
-        return (host + "?apiKey=" + apiKey);
+        return host + "?apiKey=" + apiKey;
     }
 }

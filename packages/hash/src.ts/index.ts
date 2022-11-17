@@ -8,17 +8,4 @@ import { ensNormalize } from "./namehash";
 
 import { TypedDataEncoder as _TypedDataEncoder } from "./typed-data";
 
-export {
-    id,
-
-    dnsEncode,
-    namehash,
-    isValidName,
-
-    ensNormalize,
-
-    messagePrefix,
-    hashMessage,
-
-    _TypedDataEncoder,
-}
+export { id, dnsEncode, namehash, isValidName, ensNormalize, messagePrefix, hashMessage, _TypedDataEncoder };

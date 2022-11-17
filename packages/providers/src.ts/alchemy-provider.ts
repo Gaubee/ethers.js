@@ -18,7 +18,7 @@ import { UrlJsonRpcProvider } from "./url-json-rpc-provider";
 // production environments, that you acquire your own API key at:
 //   https://dashboard.alchemyapi.io
 
-const defaultApiKey = "_gg7wSSi0KMBsdKnGVfHDueq6xMB9EkC"
+const defaultApiKey = "_gg7wSSi0KMBsdKnGVfHDueq6xMB9EkC";
 
 export class AlchemyWebSocketProvider extends WebSocketProvider implements CommunityResourcable {
     readonly apiKey: string;
@@ -26,27 +26,27 @@ export class AlchemyWebSocketProvider extends WebSocketProvider implements Commu
     constructor(network?: Networkish, apiKey?: any) {
         const provider = new AlchemyProvider(network, apiKey);
 
-        const url = provider.connection.url.replace(/^http/i, "ws")
-                                           .replace(".alchemyapi.", ".ws.alchemyapi.");
+        const url = provider.connection.url.replace(/^http/i, "ws").replace(".alchemyapi.", ".ws.alchemyapi.");
 
         super(url, provider.network);
         defineReadOnly(this, "apiKey", provider.apiKey);
     }
 
     isCommunityResource(): boolean {
-        return (this.apiKey === defaultApiKey);
+        return this.apiKey === defaultApiKey;
     }
 }
 
 export class AlchemyProvider extends UrlJsonRpcProvider {
-
     static getWebSocketProvider(network?: Networkish, apiKey?: any): AlchemyWebSocketProvider {
         return new AlchemyWebSocketProvider(network, apiKey);
     }
 
     static getApiKey(apiKey: any): any {
-        if (apiKey == null) { return defaultApiKey; }
-        if (apiKey && typeof(apiKey) !== "string") {
+        if (apiKey == null) {
+            return defaultApiKey;
+        }
+        if (apiKey && typeof apiKey !== "string") {
             logger.throwArgumentError("invalid apiKey", "apiKey", apiKey);
         }
         return apiKey;
@@ -77,25 +77,25 @@ export class AlchemyProvider extends UrlJsonRpcProvider {
                 host = "opt-mainnet.g.alchemy.com/v2/";
                 break;
             case "optimism-goerli":
-                host = "opt-goerli.g.alchemy.com/v2/"
+                host = "opt-goerli.g.alchemy.com/v2/";
                 break;
             default:
-               logger.throwArgumentError("unsupported network", "network", arguments[0]);
+                logger.throwArgumentError("unsupported network", "network", arguments[0]);
         }
 
         return {
             allowGzip: true,
-            url: ("https:/" + "/" + host + apiKey),
+            url: "https:/" + "/" + host + apiKey,
             throttleCallback: (attempt: number, url: string) => {
                 if (apiKey === defaultApiKey) {
                     showThrottleMessage();
                 }
                 return Promise.resolve(true);
-            }
+            },
         };
     }
 
     isCommunityResource(): boolean {
-        return (this.apiKey === defaultApiKey);
+        return this.apiKey === defaultApiKey;
     }
 }

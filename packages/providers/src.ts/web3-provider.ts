@@ -15,10 +15,13 @@ export type ExternalProvider = {
     isStatus?: boolean;
     host?: string;
     path?: string;
-    sendAsync?: (request: { method: string, params?: Array<any> }, callback: (error: any, response: any) => void) => void
-    send?: (request: { method: string, params?: Array<any> }, callback: (error: any, response: any) => void) => void
-    request?: (request: { method: string, params?: Array<any> }) => Promise<any>
-}
+    sendAsync?: (
+        request: { method: string; params?: Array<any> },
+        callback: (error: any, response: any) => void,
+    ) => void;
+    send?: (request: { method: string; params?: Array<any> }, callback: (error: any, response: any) => void) => void;
+    request?: (request: { method: string; params?: Array<any> }) => Promise<any>;
+};
 
 let _nextId = 1;
 
@@ -26,15 +29,15 @@ export type JsonRpcFetchFunc = (method: string, params?: Array<any>) => Promise<
 
 type Web3LegacySend = (request: any, callback: (error: Error, response: any) => void) => void;
 
-function buildWeb3LegacyFetcher(provider: ExternalProvider, sendFunc: Web3LegacySend) : JsonRpcFetchFunc {
+function buildWeb3LegacyFetcher(provider: ExternalProvider, sendFunc: Web3LegacySend): JsonRpcFetchFunc {
     const fetcher = "Web3LegacyFetcher";
 
-    return function(method: string, params: Array<any>): Promise<any> {
+    return function (method: string, params: Array<any>): Promise<any> {
         const request = {
             method: method,
             params: params,
-            id: (_nextId++),
-            jsonrpc: "2.0"
+            id: _nextId++,
+            jsonrpc: "2.0",
         };
 
         return new Promise((resolve, reject) => {
@@ -42,18 +45,17 @@ function buildWeb3LegacyFetcher(provider: ExternalProvider, sendFunc: Web3Legacy
                 action: "request",
                 fetcher,
                 request: deepCopy(request),
-                provider: this
+                provider: this,
             });
 
             sendFunc(request, (error, response) => {
-
                 if (error) {
                     this.emit("debug", {
                         action: "response",
                         fetcher,
                         error,
                         request,
-                        provider: this
+                        provider: this,
                     });
 
                     return reject(error);
@@ -64,7 +66,7 @@ function buildWeb3LegacyFetcher(provider: ExternalProvider, sendFunc: Web3Legacy
                     fetcher,
                     request,
                     response,
-                    provider: this
+                    provider: this,
                 });
 
                 if (response.error) {
@@ -77,12 +79,14 @@ function buildWeb3LegacyFetcher(provider: ExternalProvider, sendFunc: Web3Legacy
                 resolve(response.result);
             });
         });
-    }
+    };
 }
 
 function buildEip1193Fetcher(provider: ExternalProvider): JsonRpcFetchFunc {
-    return function(method: string, params: Array<any>): Promise<any> {
-        if (params == null) { params = [ ]; }
+    return function (method: string, params: Array<any>): Promise<any> {
+        if (params == null) {
+            params = [];
+        }
 
         const request = { method, params };
 
@@ -90,32 +94,34 @@ function buildEip1193Fetcher(provider: ExternalProvider): JsonRpcFetchFunc {
             action: "request",
             fetcher: "Eip1193Fetcher",
             request: deepCopy(request),
-            provider: this
+            provider: this,
         });
 
-        return provider.request(request).then((response) => {
-            this.emit("debug", {
-                action: "response",
-                fetcher: "Eip1193Fetcher",
-                request,
-                response,
-                provider: this
-            });
+        return provider.request(request).then(
+            (response) => {
+                this.emit("debug", {
+                    action: "response",
+                    fetcher: "Eip1193Fetcher",
+                    request,
+                    response,
+                    provider: this,
+                });
 
-            return response;
+                return response;
+            },
+            (error) => {
+                this.emit("debug", {
+                    action: "response",
+                    fetcher: "Eip1193Fetcher",
+                    request,
+                    error,
+                    provider: this,
+                });
 
-        }, (error) => {
-            this.emit("debug", {
-                action: "response",
-                fetcher: "Eip1193Fetcher",
-                request,
-                error,
-                provider: this
-            });
-
-            throw error;
-        });
-    }
+                throw error;
+            },
+        );
+    };
 }
 
 export class Web3Provider extends JsonRpcProvider {
@@ -131,10 +137,9 @@ export class Web3Provider extends JsonRpcProvider {
         let jsonRpcFetchFunc: JsonRpcFetchFunc = null;
         let subprovider: ExternalProvider = null;
 
-        if (typeof(provider) === "function") {
+        if (typeof provider === "function") {
             path = "unknown:";
             jsonRpcFetchFunc = provider;
-
         } else {
             path = provider.host || provider.path || "";
             if (!path && provider.isMetaMask) {
@@ -144,7 +149,9 @@ export class Web3Provider extends JsonRpcProvider {
             subprovider = provider;
 
             if (provider.request) {
-                if (path === "") { path = "eip-1193:"; }
+                if (path === "") {
+                    path = "eip-1193:";
+                }
                 jsonRpcFetchFunc = buildEip1193Fetcher(provider);
             } else if (provider.sendAsync) {
                 jsonRpcFetchFunc = buildWeb3LegacyFetcher(provider, provider.sendAsync.bind(provider));
@@ -154,7 +161,9 @@ export class Web3Provider extends JsonRpcProvider {
                 logger.throwArgumentError("unsupported provider", "provider", provider);
             }
 
-            if (!path) { path = "unknown:"; }
+            if (!path) {
+                path = "unknown:";
+            }
         }
 
         super(path, network);

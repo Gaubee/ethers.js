@@ -1,23 +1,25 @@
 "use strict";
 
 import { arrayify, Bytes, BytesLike, hexlify } from "@ethersproject/bytes";
-import { toUtf8Bytes, UnicodeNormalizationForm } from '@ethersproject/strings';
+import { toUtf8Bytes, UnicodeNormalizationForm } from "@ethersproject/strings";
 
 export function looseArrayify(hexString: string): Uint8Array {
-    if (typeof(hexString) === 'string' && hexString.substring(0, 2) !== '0x') {
-        hexString = '0x' + hexString;
+    if (typeof hexString === "string" && hexString.substring(0, 2) !== "0x") {
+        hexString = "0x" + hexString;
     }
     return arrayify(hexString);
 }
 
 export function zpad(value: String | number, length: number): String {
     value = String(value);
-    while (value.length < length) { value = '0' + value; }
+    while (value.length < length) {
+        value = "0" + value;
+    }
     return value;
 }
 
 export function getPassword(password: Bytes | string): Uint8Array {
-    if (typeof(password) === 'string') {
+    if (typeof password === "string") {
         return toUtf8Bytes(password, UnicodeNormalizationForm.NFKC);
     }
     return arrayify(password);
@@ -26,16 +28,15 @@ export function getPassword(password: Bytes | string): Uint8Array {
 export function searchPath(object: any, path: string): string {
     let currentChild = object;
 
-    const comps = path.toLowerCase().split('/');
+    const comps = path.toLowerCase().split("/");
     for (let i = 0; i < comps.length; i++) {
-
         // Search for a child object with a case-insensitive matching key
         let matchingChild = null;
         for (const key in currentChild) {
-             if (key.toLowerCase() === comps[i]) {
-                 matchingChild = currentChild[key];
-                 break;
-             }
+            if (key.toLowerCase() === comps[i]) {
+                matchingChild = currentChild[key];
+                break;
+            }
         }
 
         // Didn't find one. :'(
@@ -66,11 +67,10 @@ export function uuidV4(randomBytes: BytesLike): string {
     const value = hexlify(bytes);
 
     return [
-       value.substring(2, 10),
-       value.substring(10, 14),
-       value.substring(14, 18),
-       value.substring(18, 22),
-       value.substring(22, 34),
+        value.substring(2, 10),
+        value.substring(10, 14),
+        value.substring(14, 18),
+        value.substring(18, 22),
+        value.substring(22, 34),
     ].join("-");
 }
-

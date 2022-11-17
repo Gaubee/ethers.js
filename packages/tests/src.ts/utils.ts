@@ -1,13 +1,17 @@
 /* istanbul ignore file */
 
-'use strict';
+"use strict";
 
 import { ethers } from "ethers";
 
 function randomBytes(seed: string, lower: number, upper?: number): Uint8Array {
-    if (!upper) { upper = lower; }
+    if (!upper) {
+        upper = lower;
+    }
 
-    if (upper === 0 && upper === lower) { return new Uint8Array(0); }
+    if (upper === 0 && upper === lower) {
+        return new Uint8Array(0);
+    }
 
     let result = ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.toUtf8Bytes(seed)));
     while (result.length < upper) {
@@ -31,27 +35,36 @@ function randomNumber(seed: string, lower: number, upper: number): number {
 }
 
 function equals(a: any, b: any): boolean {
-
     // Array (treat recursively)
     if (Array.isArray(a)) {
-        if (!Array.isArray(b) || a.length !== b.length) { return false; }
+        if (!Array.isArray(b) || a.length !== b.length) {
+            return false;
+        }
         for (let i = 0; i < a.length; i++) {
-            if (!equals(a[i], b[i])) { return false; }
+            if (!equals(a[i], b[i])) {
+                return false;
+            }
         }
         return true;
     }
 
     // BigNumber
     if (a.eq) {
-        if (!b.eq || !a.eq(b)) { return false; }
+        if (!b.eq || !a.eq(b)) {
+            return false;
+        }
         return true;
     }
 
     // Uint8Array
     if (a.buffer) {
-        if (!b.buffer || a.length !== b.length) { return false; }
+        if (!b.buffer || a.length !== b.length) {
+            return false;
+        }
         for (let i = 0; i < a.length; i++) {
-            if (a[i] !== b[i]) { return false; }
+            if (a[i] !== b[i]) {
+                return false;
+            }
         }
 
         return true;
@@ -71,17 +84,21 @@ function getWallet(): ethers.Wallet {
         try {
             if (typeof window !== "undefined") {
                 key = (<any>window).__karma__.config.args[0];
-                if (typeof(key) !== "string") { key = null; }
+                if (typeof key !== "string") {
+                    key = null;
+                }
             }
-        } catch (error) { }
+        } catch (error) {}
     }
 
     // node.js
     if (key == null) {
         try {
             key = process.env.FAUCET_PRIVATEKEY;
-            if (typeof(key) !== "string") { key = null; }
-        } catch (error) { }
+            if (typeof key !== "string") {
+                key = null;
+            }
+        } catch (error) {}
     }
 
     if (key == null) {
@@ -96,7 +113,7 @@ export async function fundAddress(address: string): Promise<string> {
         const faucetWallet = getWallet();
         const tx = await faucetWallet.sendTransaction({
             to: address,
-            value: "314159265358979323"
+            value: "314159265358979323",
         });
         return tx.wait().then((resp) => resp.transactionHash);
     } catch (error) {
@@ -106,7 +123,6 @@ export async function fundAddress(address: string): Promise<string> {
 }
 
 export async function returnFunds(wallet: ethers.Wallet): Promise<string> {
-
     const faucet = getWallet();
 
     const provider = faucet.provider;
@@ -118,7 +134,7 @@ export async function returnFunds(wallet: ethers.Wallet): Promise<string> {
         to: faucet.address,
         gasLimit: 21000,
         gasPrice: gasPrice,
-        value: balance.sub(gasPrice.mul(21000))
+        value: balance.sub(gasPrice.mul(21000)),
     });
 
     return tx.hash;
@@ -130,10 +146,4 @@ export async function sendTransaction(txObj: ethers.providers.TransactionRequest
     return tx.hash;
 }
 
-export {
-    randomBytes,
-    randomHexString,
-    randomNumber,
-
-    equals
-}
+export { randomBytes, randomHexString, randomNumber, equals };

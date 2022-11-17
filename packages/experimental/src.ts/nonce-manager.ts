@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 import { ethers } from "ethers";
 
@@ -32,7 +32,7 @@ export class NonceManager extends ethers.Signer {
                 this._initialPromise = this.signer.getTransactionCount("pending");
             }
             const deltaCount = this._deltaCount;
-            return this._initialPromise.then((initial) => (initial + deltaCount));
+            return this._initialPromise.then((initial) => initial + deltaCount);
         }
 
         return this.signer.getTransactionCount(blockTag);
@@ -46,18 +46,20 @@ export class NonceManager extends ethers.Signer {
     }
 
     incrementTransactionCount(count?: number): void {
-        this._deltaCount += ((count == null) ? 1: count);
+        this._deltaCount += count == null ? 1 : count;
     }
 
     signMessage(message: ethers.Bytes | string): Promise<string> {
-        return this.signer.signMessage(message);;
+        return this.signer.signMessage(message);
     }
 
     signTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<string> {
         return this.signer.signTransaction(transaction);
     }
 
-    sendTransaction(transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>): Promise<ethers.providers.TransactionResponse> {
+    sendTransaction(
+        transaction: ethers.utils.Deferrable<ethers.providers.TransactionRequest>,
+    ): Promise<ethers.providers.TransactionResponse> {
         if (transaction.nonce == null) {
             transaction = ethers.utils.shallowCopy(transaction);
             transaction.nonce = this.getTransactionCount("pending");

@@ -7,7 +7,6 @@ import { version } from "./_version";
 const logger = new ethers.utils.Logger(version);
 
 export class MetamaskProvider extends ethers.providers.Web3Provider {
-
     _pollingAccount: any;
     _pollAccountFunc: () => void;
 
@@ -16,7 +15,7 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
             ethereum = (<any>global).ethereum;
             if (!ethereum) {
                 logger.throwError("could not auto-detect global.ethereum", ethers.errors.UNSUPPORTED_OPERATION, {
-                    operation: "window.ethereum"
+                    operation: "window.ethereum",
                 });
             }
         }
@@ -26,7 +25,9 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
         let _account: string = null;
         ethers.utils.defineReadOnly(this, "_pollAccountFunc", () => {
             let account: string = null;
-            if (account === _account) { return; }
+            if (account === _account) {
+                return;
+            }
             console.log("poll");
             this.emit("account", account, _account);
             _account = account;
@@ -36,7 +37,9 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
     }
 
     getSigner(addressOrIndex?: string | number): ethers.providers.JsonRpcSigner {
-        if (!this.enabled) { return null }
+        if (!this.enabled) {
+            return null;
+        }
         return super.getSigner(addressOrIndex);
     }
 
@@ -45,13 +48,17 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
     }
 
     _startPollingAccount(): void {
-        if (this._pollingAccount) { return; }
+        if (this._pollingAccount) {
+            return;
+        }
         console.log("start polling for account changes including to/from null");
         this._pollingAccount = setInterval(this._pollAccountFunc, 1000);
     }
 
     _stopPollingAccount(): void {
-        if (!this._pollingAccount) { return; }
+        if (!this._pollingAccount) {
+            return;
+        }
         console.log("stop polling for account changes including to/from null");
         clearInterval(this._pollingAccount);
         this._pollingAccount = null;
@@ -72,5 +79,4 @@ export class MetamaskProvider extends ethers.providers.Web3Provider {
         }
         return this;
     }
-
 }

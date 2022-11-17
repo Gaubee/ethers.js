@@ -30,8 +30,8 @@ const logger = new Logger(version);
 let NextId = 1;
 
 export type InflightRequest = {
-     callback: (error: Error, result: any) => void;
-     payload: string;
+    callback: (error: Error, result: any) => void;
+    payload: string;
 };
 
 export type Subscription = {
@@ -55,27 +55,30 @@ export interface WebSocketLike {
 
 export class WebSocketProvider extends JsonRpcProvider {
     readonly _websocket: any;
-    readonly _requests: { [ name: string ]: InflightRequest };
+    readonly _requests: { [name: string]: InflightRequest };
     readonly _detectNetwork: Promise<Network>;
 
     // Maps event tag to subscription ID (we dedupe identical events)
-    readonly _subIds: { [ tag: string ]: Promise<string> };
+    readonly _subIds: { [tag: string]: Promise<string> };
 
     // Maps Subscription ID to Subscription
-    readonly _subs: { [ name: string ]: Subscription };
+    readonly _subs: { [name: string]: Subscription };
 
     _wsReady: boolean;
 
     constructor(url: string | WebSocketLike, network?: Networkish) {
-
         // This will be added in the future; please open an issue to expedite
         if (network === "any") {
-            logger.throwError("WebSocketProvider does not support 'any' network yet", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "network:any"
-            });
+            logger.throwError(
+                "WebSocketProvider does not support 'any' network yet",
+                Logger.errors.UNSUPPORTED_OPERATION,
+                {
+                    operation: "network:any",
+                },
+            );
         }
 
-        if (typeof(url) === "string") {
+        if (typeof url === "string") {
             super(url, network);
         } else {
             super("_websocket", network);
@@ -85,15 +88,15 @@ export class WebSocketProvider extends JsonRpcProvider {
 
         this._wsReady = false;
 
-        if (typeof(url) === "string") {
+        if (typeof url === "string") {
             defineReadOnly(this, "_websocket", new WebSocket(this.connection.url));
         } else {
             defineReadOnly(this, "_websocket", url);
         }
 
-        defineReadOnly(this, "_requests", { });
-        defineReadOnly(this, "_subs", { });
-        defineReadOnly(this, "_subIds", { });
+        defineReadOnly(this, "_requests", {});
+        defineReadOnly(this, "_subs", {});
+        defineReadOnly(this, "_subIds", {});
         defineReadOnly(this, "_detectNetwork", super.detectNetwork());
 
         // Stall sending requests until the socket is open...
@@ -119,9 +122,8 @@ export class WebSocketProvider extends JsonRpcProvider {
                         action: "response",
                         request: JSON.parse(request.payload),
                         response: result.result,
-                        provider: this
+                        provider: this,
                     });
-
                 } else {
                     let error: Error = null;
                     if (result.error) {
@@ -138,19 +140,16 @@ export class WebSocketProvider extends JsonRpcProvider {
                         action: "response",
                         error: error,
                         request: JSON.parse(request.payload),
-                        provider: this
+                        provider: this,
                     });
-
                 }
-
             } else if (result.method === "eth_subscription") {
                 // Subscription...
                 const sub = this._subs[result.params.subscription];
                 if (sub) {
                     //this.emit.apply(this,                  );
-                    sub.processFunc(result.params.result)
+                    sub.processFunc(result.params.result);
                 }
-
             } else {
                 console.warn("this should not happen");
             }
@@ -162,12 +161,16 @@ export class WebSocketProvider extends JsonRpcProvider {
         const fauxPoll = setInterval(() => {
             this.emit("poll");
         }, 1000);
-        if (fauxPoll.unref) { fauxPoll.unref(); }
+        if (fauxPoll.unref) {
+            fauxPoll.unref();
+        }
     }
 
     // Cannot narrow the type of _websocket, as that is not backwards compatible
     // so we add a getter and let the WebSocket be a public API.
-    get websocket(): WebSocketLike { return this._websocket; }
+    get websocket(): WebSocketLike {
+        return this._websocket;
+    }
 
     detectNetwork(): Promise<Network> {
         return this._detectNetwork;
@@ -179,13 +182,13 @@ export class WebSocketProvider extends JsonRpcProvider {
 
     resetEventsBlock(blockNumber: number): void {
         logger.throwError("cannot reset events block on WebSocketProvider", Logger.errors.UNSUPPORTED_OPERATION, {
-            operation: "resetEventBlock"
+            operation: "resetEventBlock",
         });
     }
 
     set pollingInterval(value: number) {
         logger.throwError("cannot set polling interval on WebSocketProvider", Logger.errors.UNSUPPORTED_OPERATION, {
-            operation: "setPollingInterval"
+            operation: "setPollingInterval",
         });
     }
 
@@ -194,10 +197,12 @@ export class WebSocketProvider extends JsonRpcProvider {
     }
 
     set polling(value: boolean) {
-        if (!value) { return; }
+        if (!value) {
+            return;
+        }
 
         logger.throwError("cannot set polling on WebSocketProvider", Logger.errors.UNSUPPORTED_OPERATION, {
-            operation: "setPolling"
+            operation: "setPolling",
         });
     }
 
@@ -206,7 +211,9 @@ export class WebSocketProvider extends JsonRpcProvider {
 
         return new Promise((resolve, reject) => {
             function callback(error: Error, result: any) {
-                if (error) { return reject(error); }
+                if (error) {
+                    return reject(error);
+                }
                 return resolve(result);
             }
 
@@ -214,23 +221,25 @@ export class WebSocketProvider extends JsonRpcProvider {
                 method: method,
                 params: params,
                 id: rid,
-                jsonrpc: "2.0"
+                jsonrpc: "2.0",
             });
 
             this.emit("debug", {
                 action: "request",
                 request: JSON.parse(payload),
-                provider: this
+                provider: this,
             });
 
             this._requests[String(rid)] = { callback, payload };
 
-            if (this._wsReady) { this.websocket.send(payload); }
+            if (this._wsReady) {
+                this.websocket.send(payload);
+            }
         });
     }
 
     static defaultUrl(): string {
-        return "ws:/\/localhost:8546";
+        return "ws://localhost:8546";
     }
 
     async _subscribe(tag: string, param: Array<any>, processFunc: (result: any) => void): Promise<void> {
@@ -248,7 +257,7 @@ export class WebSocketProvider extends JsonRpcProvider {
     _startEvent(event: Event): void {
         switch (event.type) {
             case "block":
-                this._subscribe("block", [ "newHeads" ], (result: any) => {
+                this._subscribe("block", ["newHeads"], (result: any) => {
                     const blockNumber = BigNumber.from(result.number).toNumber();
                     this._emitted.block = blockNumber;
                     this.emit("block", blockNumber);
@@ -256,14 +265,16 @@ export class WebSocketProvider extends JsonRpcProvider {
                 break;
 
             case "pending":
-                this._subscribe("pending", [ "newPendingTransactions" ], (result: any) => {
+                this._subscribe("pending", ["newPendingTransactions"], (result: any) => {
                     this.emit("pending", result);
                 });
                 break;
 
             case "filter":
-                this._subscribe(event.tag, [ "logs", this._getFilter(event.filter) ], (result: any) => {
-                    if (result.removed == null) { result.removed = false; }
+                this._subscribe(event.tag, ["logs", this._getFilter(event.filter)], (result: any) => {
+                    if (result.removed == null) {
+                        result.removed = false;
+                    }
                     this.emit(event.filter, this.formatter.filterLog(result));
                 });
                 break;
@@ -272,7 +283,9 @@ export class WebSocketProvider extends JsonRpcProvider {
                 const emitReceipt = (event: Event) => {
                     const hash = event.hash;
                     this.getTransactionReceipt(hash).then((receipt) => {
-                        if (!receipt) { return; }
+                        if (!receipt) {
+                            return;
+                        }
                         this.emit(hash, receipt);
                     });
                 };
@@ -284,8 +297,8 @@ export class WebSocketProvider extends JsonRpcProvider {
                 // to keep an eye out for transactions we are watching for.
                 // Starting a subscription for an event (i.e. "tx") that is already
                 // running is (basically) a nop.
-                this._subscribe("tx", [ "newHeads" ], (result: any) => {
-                    this._events.filter((e) => (e.type === "tx")).forEach(emitReceipt);
+                this._subscribe("tx", ["newHeads"], (result: any) => {
+                    this._events.filter((e) => e.type === "tx").forEach(emitReceipt);
                 });
                 break;
             }
@@ -309,7 +322,7 @@ export class WebSocketProvider extends JsonRpcProvider {
 
         if (event.type === "tx") {
             // There are remaining transaction event listeners
-            if (this._events.filter((e) => (e.type === "tx")).length) {
+            if (this._events.filter((e) => e.type === "tx").length) {
                 return;
             }
             tag = "tx";
@@ -319,28 +332,32 @@ export class WebSocketProvider extends JsonRpcProvider {
         }
 
         const subId = this._subIds[tag];
-        if (!subId) { return; }
+        if (!subId) {
+            return;
+        }
 
-       delete this._subIds[tag];
-       subId.then((subId) => {
-            if (!this._subs[subId]) { return; }
+        delete this._subIds[tag];
+        subId.then((subId) => {
+            if (!this._subs[subId]) {
+                return;
+            }
             delete this._subs[subId];
-            this.send("eth_unsubscribe", [ subId ]);
+            this.send("eth_unsubscribe", [subId]);
         });
     }
 
     async destroy(): Promise<void> {
         // Wait until we have connected before trying to disconnect
         if (this.websocket.readyState === WebSocket.CONNECTING) {
-            await (new Promise((resolve) => {
-                this.websocket.onopen = function() {
+            await new Promise((resolve) => {
+                this.websocket.onopen = function () {
                     resolve(true);
                 };
 
-                this.websocket.onerror = function() {
+                this.websocket.onerror = function () {
                     resolve(false);
                 };
-            }));
+            });
         }
 
         // Hangup

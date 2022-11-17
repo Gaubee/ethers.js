@@ -5,9 +5,7 @@ import { toUtf8Bytes, toUtf8String } from "@ethersproject/strings";
 
 import { logger, Wordlist } from "./wordlist";
 
-
 const data = [
-
     // 4-kana words
     "AQRASRAGBAGUAIRAHBAghAURAdBAdcAnoAMEAFBAFCBKFBQRBSFBCXBCDBCHBGFBEQBpBBpQBIkBHNBeOBgFBVCBhBBhNBmOBmRBiHBiFBUFBZDBvFBsXBkFBlcBjYBwDBMBBTBBTRBWBBWXXaQXaRXQWXSRXCFXYBXpHXOQXHRXhRXuRXmXXbRXlXXwDXTRXrCXWQXWGaBWaKcaYgasFadQalmaMBacAKaRKKBKKXKKjKQRKDRKCYKCRKIDKeVKHcKlXKjHKrYNAHNBWNaRNKcNIBNIONmXNsXNdXNnBNMBNRBNrXNWDNWMNFOQABQAHQBrQXBQXFQaRQKXQKDQKOQKFQNBQNDQQgQCXQCDQGBQGDQGdQYXQpBQpQQpHQLXQHuQgBQhBQhCQuFQmXQiDQUFQZDQsFQdRQkHQbRQlOQlmQPDQjDQwXQMBQMDQcFQTBQTHQrDDXQDNFDGBDGQDGRDpFDhFDmXDZXDbRDMYDRdDTRDrXSAhSBCSBrSGQSEQSHBSVRShYShkSyQSuFSiBSdcSoESocSlmSMBSFBSFKSFNSFdSFcCByCaRCKcCSBCSRCCrCGbCEHCYXCpBCpQCIBCIHCeNCgBCgFCVECVcCmkCmwCZXCZFCdRClOClmClFCjDCjdCnXCwBCwXCcRCFQCFjGXhGNhGDEGDMGCDGCHGIFGgBGVXGVEGVRGmXGsXGdYGoSGbRGnXGwXGwDGWRGFNGFLGFOGFdGFkEABEBDEBFEXOEaBEKSENBENDEYXEIgEIkEgBEgQEgHEhFEudEuFEiBEiHEiFEZDEvBEsXEsFEdXEdREkFEbBEbRElFEPCEfkEFNYAEYAhYBNYQdYDXYSRYCEYYoYgQYgRYuRYmCYZTYdBYbEYlXYjQYRbYWRpKXpQopQnpSFpCXpIBpISphNpdBpdRpbRpcZpFBpFNpFDpFopFrLADLBuLXQLXcLaFLCXLEhLpBLpFLHXLeVLhILdHLdRLoDLbRLrXIABIBQIBCIBsIBoIBMIBRIXaIaRIKYIKRINBINuICDIGBIIDIIkIgRIxFIyQIiHIdRIbYIbRIlHIwRIMYIcRIRVITRIFBIFNIFQOABOAFOBQOaFONBONMOQFOSFOCDOGBOEQOpBOLXOIBOIFOgQOgFOyQOycOmXOsXOdIOkHOMEOMkOWWHBNHXNHXWHNXHDuHDRHSuHSRHHoHhkHmRHdRHkQHlcHlRHwBHWcgAEgAggAkgBNgBQgBEgXOgYcgLXgHjgyQgiBgsFgdagMYgWSgFQgFEVBTVXEVKBVKNVKDVKYVKRVNBVNYVDBVDxVSBVSRVCjVGNVLXVIFVhBVhcVsXVdRVbRVlRhBYhKYhDYhGShxWhmNhdahdkhbRhjohMXhTRxAXxXSxKBxNBxEQxeNxeQxhXxsFxdbxlHxjcxFBxFNxFQxFOxFoyNYyYoybcyMYuBQuBRuBruDMuCouHBudQukkuoBulVuMXuFEmCYmCRmpRmeDmiMmjdmTFmFQiADiBOiaRiKRiNBiNRiSFiGkiGFiERipRiLFiIFihYibHijBijEiMXiWBiFBiFCUBQUXFUaRUNDUNcUNRUNFUDBUSHUCDUGBUGFUEqULNULoUIRUeEUeYUgBUhFUuRUiFUsXUdFUkHUbBUjSUjYUwXUMDUcHURdUTBUrBUrXUrQZAFZXZZaRZKFZNBZQFZCXZGBZYdZpBZLDZIFZHXZHNZeQZVRZVFZmXZiBZvFZdFZkFZbHZbFZwXZcCZcRZRBvBQvBGvBLvBWvCovMYsAFsBDsaRsKFsNFsDrsSHsSFsCXsCRsEBsEHsEfspBsLBsLDsIgsIRseGsbRsFBsFQsFSdNBdSRdCVdGHdYDdHcdVbdySduDdsXdlRdwXdWYdWcdWRkBMkXOkaRkNIkNFkSFkCFkYBkpRkeNkgBkhVkmXksFklVkMBkWDkFNoBNoaQoaFoNBoNXoNaoNEoSRoEroYXoYCoYbopRopFomXojkowXorFbBEbEIbdBbjYlaRlDElMXlFDjKjjSRjGBjYBjYkjpRjLXjIBjOFjeVjbRjwBnXQnSHnpFnLXnINnMBnTRwXBwXNwXYwNFwQFwSBwGFwLXwLDweNwgBwuHwjDwnXMBXMpFMIBMeNMTHcaQcNBcDHcSFcCXcpBcLXcLDcgFcuFcnXcwXccDcTQcrFTQErXNrCHrpFrgFrbFrTHrFcWNYWNbWEHWMXWTR",
 
@@ -27,11 +25,11 @@ const data = [
     "QJEJNNJDQJEJIBSFQJEJxegBQJEJfHEPSJBmXEJFSJCDEJqXLXNJFQqXIcQsFNJFIFEJqXUJgFsJXIJBUJEJfHNFvJxEqXNJnXUJFQqD",
 
     // 10-kana words
-    "IJBEJqXZJ"
+    "IJBEJqXZJ",
 ];
 
 // Maps each character into its kana value (the index)
-const mapping = "~~AzB~X~a~KN~Q~D~S~C~G~E~Y~p~L~I~O~eH~g~V~hxyumi~~U~~Z~~v~~s~~dkoblPjfnqwMcRTr~W~~~F~~~~~Jt"
+const mapping = "~~AzB~X~a~KN~Q~D~S~C~G~E~Y~p~L~I~O~eH~g~V~hxyumi~~U~~Z~~v~~s~~dkoblPjfnqwMcRTr~W~~~F~~~~~Jt";
 
 let wordlist: Array<string> = null;
 
@@ -40,10 +38,12 @@ function hex(word: string) {
 }
 
 const KiYoKu = "0xe3818de38284e3818f";
-const KyoKu = "0xe3818de38283e3818f"
+const KyoKu = "0xe3818de38283e3818f";
 
 function loadWords(lang: Wordlist) {
-    if (wordlist !== null) { return; }
+    if (wordlist !== null) {
+        return;
+    }
 
     wordlist = [];
 
@@ -60,15 +60,18 @@ function loadWords(lang: Wordlist) {
     transform[toUtf8String([227, 130, 131])] = toUtf8String([227, 130, 132]);
     transform[toUtf8String([227, 130, 135])] = toUtf8String([227, 130, 136]);
 
-
     // Normalize words using the transform
     function normalize(word: string) {
         let result = "";
         for (let i = 0; i < word.length; i++) {
             let kana = word[i];
             const target = transform[kana];
-            if (target === false) { continue; }
-            if (target) { kana = <string>target; }
+            if (target === false) {
+                continue;
+            }
+            if (target) {
+                kana = <string>target;
+            }
             result += kana;
         }
         return result;
@@ -78,8 +81,12 @@ function loadWords(lang: Wordlist) {
     function sortJapanese(a: string, b: string) {
         a = normalize(a);
         b = normalize(b);
-        if (a < b) { return -1; }
-        if (a > b) { return 1; }
+        if (a < b) {
+            return -1;
+        }
+        if (a > b) {
+            return 1;
+        }
         return 0;
     }
 
@@ -89,10 +96,10 @@ function loadWords(lang: Wordlist) {
         for (let offset = 0; offset < d.length; offset += length) {
             const word = [];
             for (let i = 0; i < length; i++) {
-                 const k = mapping.indexOf(d[offset + i]);
-                 word.push(227);
-                 word.push((k & 0x40) ? 130: 129);
-                 word.push((k & 0x3f) + 128);
+                const k = mapping.indexOf(d[offset + i]);
+                word.push(227);
+                word.push(k & 0x40 ? 130 : 129);
+                word.push((k & 0x3f) + 128);
             }
             wordlist.push(toUtf8String(word));
         }
@@ -149,4 +156,3 @@ const langJa = new LangJa();
 Wordlist.register(langJa);
 
 export { langJa };
-

@@ -9,13 +9,15 @@ export type TransportCreator = {
 let hidCache: Promise<typeof import("@ledgerhq/hw-transport-node-hid")> = null;
 
 const hidWrapper = Object.freeze({
-    create: function(): Promise<Transport> {
+    create: function (): Promise<Transport> {
         // Load the library if not loaded
         if (hidCache == null) {
             hidCache = new Promise((resolve, reject) => {
                 try {
                     let hid = require("@ledgerhq/hw-transport-node-hid");
-                    if (hid.create == null) { resolve(hid["default"]); }
+                    if (hid.create == null) {
+                        resolve(hid["default"]);
+                    }
                     resolve(hid);
                 } catch (error) {
                     reject(error);
@@ -30,12 +32,12 @@ const hidWrapper = Object.freeze({
         }
 
         return hidCache.then((hid) => {
-            return hid.create()
+            return hid.create();
         });
-    }
+    },
 });
 
-export const transports: { [ name: string ]: TransportCreator } = Object.freeze({
-    "hid": hidWrapper,
-    "default": hidWrapper
+export const transports: { [name: string]: TransportCreator } = Object.freeze({
+    hid: hidWrapper,
+    default: hidWrapper,
 });

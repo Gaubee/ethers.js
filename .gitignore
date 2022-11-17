@@ -27,3 +27,6 @@ packages/testcases/input/nameprep/**
 output/**
 
 misc/testing/**
+lib
+lib._esm
+lib.esm

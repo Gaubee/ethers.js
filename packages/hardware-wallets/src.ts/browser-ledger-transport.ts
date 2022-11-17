@@ -6,7 +6,7 @@ export type TransportCreator = {
     create: () => Promise<u2f.Transport>;
 };
 
-export const transports: { [ name: string ]: TransportCreator } = {
-    "u2f": u2f,
-    "default": u2f
+export const transports: { [name: string]: TransportCreator } = {
+    u2f: u2f,
+    default: u2f,
 };

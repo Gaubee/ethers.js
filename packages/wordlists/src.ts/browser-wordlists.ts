@@ -9,6 +9,6 @@ import { Wordlist } from "./wordlist";
 
 import { langEn as en } from "./lang-en";
 
-export const wordlists: { [ locale: string ]: Wordlist } = {
-  en: en
-}
+export const wordlists: { [locale: string]: Wordlist } = {
+    en: en,
+};

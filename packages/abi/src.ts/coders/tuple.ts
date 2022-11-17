@@ -10,17 +10,19 @@ export class TupleCoder extends Coder {
         let dynamic = false;
         const types: Array<string> = [];
         coders.forEach((coder) => {
-            if (coder.dynamic) { dynamic = true; }
+            if (coder.dynamic) {
+                dynamic = true;
+            }
             types.push(coder.type);
         });
-        const type = ("tuple(" + types.join(",") + ")");
+        const type = "tuple(" + types.join(",") + ")";
 
         super("tuple", type, localName, dynamic);
         this.coders = coders;
     }
 
     defaultValue(): any {
-        const values: any = [ ];
+        const values: any = [];
         this.coders.forEach((coder) => {
             values.push(coder.defaultValue());
         });
@@ -29,20 +31,28 @@ export class TupleCoder extends Coder {
         const uniqueNames = this.coders.reduce((accum, coder) => {
             const name = coder.localName;
             if (name) {
-                if (!accum[name]) { accum[name] = 0; }
+                if (!accum[name]) {
+                    accum[name] = 0;
+                }
                 accum[name]++;
             }
             return accum;
-        }, <{ [ name: string ]: number }>{ });
+        }, <{ [name: string]: number }>{});
 
         // Add named values
         this.coders.forEach((coder: Coder, index: number) => {
             let name = coder.localName;
-            if (!name || uniqueNames[name] !== 1) { return; }
+            if (!name || uniqueNames[name] !== 1) {
+                return;
+            }
 
-            if (name === "length") { name = "_length"; }
+            if (name === "length") {
+                name = "_length";
+            }
 
-            if (values[name] != null) { return; }
+            if (values[name] != null) {
+                return;
+            }
 
             values[name] = values[index];
         });
@@ -50,7 +60,7 @@ export class TupleCoder extends Coder {
         return Object.freeze(values);
     }
 
-    encode(writer: Writer, value: Array<any> | { [ name: string ]: any }): number {
+    encode(writer: Writer, value: Array<any> | { [name: string]: any }): number {
         return pack(writer, this.coders, value);
     }
 
@@ -58,4 +68,3 @@ export class TupleCoder extends Coder {
         return reader.coerce(this.name, unpack(reader, this.coders));
     }
 }
-

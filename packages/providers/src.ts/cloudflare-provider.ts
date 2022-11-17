@@ -8,7 +8,6 @@ import { version } from "./_version";
 const logger = new Logger(version);
 
 export class CloudflareProvider extends UrlJsonRpcProvider {
-
     static getApiKey(apiKey: any): any {
         if (apiKey != null) {
             logger.throwArgumentError("apiKey not supported for cloudflare", "apiKey", apiKey);
@@ -23,7 +22,7 @@ export class CloudflareProvider extends UrlJsonRpcProvider {
                 host = "https://cloudflare-eth.com/";
                 break;
             default:
-               logger.throwArgumentError("unsupported network", "network", arguments[0]);
+                logger.throwArgumentError("unsupported network", "network", arguments[0]);
         }
 
         return host;

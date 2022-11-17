@@ -45,14 +45,14 @@ export class BaseX {
     readonly alphabet: string;
     readonly base: number;
 
-    _alphabetMap: { [ character: string ]: number };
+    _alphabetMap: { [character: string]: number };
     _leader: string;
 
     constructor(alphabet: string) {
         defineReadOnly(this, "alphabet", alphabet);
         defineReadOnly(this, "base", alphabet.length);
 
-        defineReadOnly(this, "_alphabetMap", { });
+        defineReadOnly(this, "_alphabetMap", {});
         defineReadOnly(this, "_leader", alphabet.charAt(0));
 
         // pre-compute lookup table
@@ -64,9 +64,11 @@ export class BaseX {
     encode(value: BytesLike): string {
         let source = arrayify(value);
 
-        if (source.length === 0) { return ""; }
+        if (source.length === 0) {
+            return "";
+        }
 
-        let digits = [ 0 ]
+        let digits = [0];
         for (let i = 0; i < source.length; ++i) {
             let carry = source[i];
             for (let j = 0; j < digits.length; ++j) {
@@ -81,7 +83,7 @@ export class BaseX {
             }
         }
 
-        let string = ""
+        let string = "";
 
         // deal with leading zeros
         for (let k = 0; source[k] === 0 && k < source.length - 1; ++k) {
@@ -97,12 +99,14 @@ export class BaseX {
     }
 
     decode(value: string): Uint8Array {
-        if (typeof(value) !== "string") {
+        if (typeof value !== "string") {
             throw new TypeError("Expected String");
         }
 
         let bytes: Array<number> = [];
-        if (value.length === 0) { return new Uint8Array(bytes); }
+        if (value.length === 0) {
+            return new Uint8Array(bytes);
+        }
 
         bytes.push(0);
         for (let i = 0; i < value.length; i++) {
@@ -127,10 +131,10 @@ export class BaseX {
 
         // deal with leading zeros
         for (let k = 0; value[k] === this._leader && k < value.length - 1; ++k) {
-            bytes.push(0)
+            bytes.push(0);
         }
 
-        return arrayify(new Uint8Array(bytes.reverse()))
+        return arrayify(new Uint8Array(bytes.reverse()));
     }
 }
 

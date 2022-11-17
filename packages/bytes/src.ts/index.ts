@@ -20,7 +20,6 @@ export interface Hexable {
     toHexString(): string;
 }
 
-
 /*
 export interface HexString {
     length: number;
@@ -30,72 +29,86 @@ export interface HexString {
 }
 */
 
-export type SignatureLike  = {
-    r: string;
-    s?: string;
-    _vs?: string,
-    recoveryParam?: number;
-    v?: number;
-} | BytesLike;
+export type SignatureLike =
+    | {
+          r: string;
+          s?: string;
+          _vs?: string;
+          recoveryParam?: number;
+          v?: number;
+      }
+    | BytesLike;
 
 export interface Signature {
     r: string;
 
     s: string;
-    _vs: string,
+    _vs: string;
 
     recoveryParam: number;
     v: number;
 
-    yParityAndS: string
+    yParityAndS: string;
     compact: string;
 }
 
 ///////////////////////////////
 
-
 function isHexable(value: any): value is Hexable {
-    return !!(value.toHexString);
+    return !!value.toHexString;
 }
 
 function addSlice(array: Uint8Array): Uint8Array {
-    if (array.slice) { return array; }
+    if (array.slice) {
+        return array;
+    }
 
-    array.slice = function() {
+    array.slice = function () {
         const args = Array.prototype.slice.call(arguments);
         return addSlice(new Uint8Array(Array.prototype.slice.apply(array, args)));
-    }
+    };
 
     return array;
 }
 
 export function isBytesLike(value: any): value is BytesLike {
-    return ((isHexString(value) && !(value.length % 2)) || isBytes(value));
+    return (isHexString(value) && !(value.length % 2)) || isBytes(value);
 }
 
 function isInteger(value: number) {
-    return (typeof(value) === "number" && value == value && (value % 1) === 0);
+    return typeof value === "number" && value == value && value % 1 === 0;
 }
 
 export function isBytes(value: any): value is Bytes {
-    if (value == null) { return false; }
+    if (value == null) {
+        return false;
+    }
 
-    if (value.constructor === Uint8Array) { return true; }
-    if (typeof(value) === "string") { return false; }
-    if (!isInteger(value.length) || value.length < 0) { return false; }
+    if (value.constructor === Uint8Array) {
+        return true;
+    }
+    if (typeof value === "string") {
+        return false;
+    }
+    if (!isInteger(value.length) || value.length < 0) {
+        return false;
+    }
 
     for (let i = 0; i < value.length; i++) {
         const v = value[i];
-        if (!isInteger(v) || v < 0 || v >= 256) { return false; }
+        if (!isInteger(v) || v < 0 || v >= 256) {
+            return false;
+        }
     }
     return true;
 }
 
-
 export function arrayify(value: BytesLike | Hexable | number, options?: DataOptions): Uint8Array {
-    if (!options) { options = { }; }
+    if (!options) {
+        options = {};
+    }
 
-    if (typeof(value) === "number") {
+    if (typeof value === "number") {
         logger.checkSafeUint53(value, "invalid arrayify value");
 
         const result = [];
@@ -103,16 +116,20 @@ export function arrayify(value: BytesLike | Hexable | number, options?: DataOpti
             result.unshift(value & 0xff);
             value = parseInt(String(value / 256));
         }
-        if (result.length === 0) { result.push(0); }
+        if (result.length === 0) {
+            result.push(0);
+        }
 
         return addSlice(new Uint8Array(result));
     }
 
-    if (options.allowMissingPrefix && typeof(value) === "string" && value.substring(0, 2) !== "0x") {
-         value = "0x" + value;
+    if (options.allowMissingPrefix && typeof value === "string" && value.substring(0, 2) !== "0x") {
+        value = "0x" + value;
     }
 
-    if (isHexable(value)) { value = value.toHexString(); }
+    if (isHexable(value)) {
+        value = value.toHexString();
+    }
 
     if (isHexString(value)) {
         let hex = (<string>value).substring(2);
@@ -142,8 +159,8 @@ export function arrayify(value: BytesLike | Hexable | number, options?: DataOpti
 }
 
 export function concat(items: ReadonlyArray<BytesLike>): Uint8Array {
-    const objects = items.map(item => arrayify(item));
-    const length = objects.reduce((accum, item) => (accum + item.length), 0);
+    const objects = items.map((item) => arrayify(item));
+    const length = objects.reduce((accum, item) => accum + item.length, 0);
 
     const result = new Uint8Array(length);
 
@@ -158,11 +175,15 @@ export function concat(items: ReadonlyArray<BytesLike>): Uint8Array {
 export function stripZeros(value: BytesLike): Uint8Array {
     let result: Uint8Array = arrayify(value);
 
-    if (result.length === 0) { return result; }
+    if (result.length === 0) {
+        return result;
+    }
 
     // Find the first non-zero entry
     let start = 0;
-    while (start < result.length && result[start] === 0) { start++ }
+    while (start < result.length && result[start] === 0) {
+        start++;
+    }
 
     // If we started with zeros, strip them
     if (start) {
@@ -184,21 +205,24 @@ export function zeroPad(value: BytesLike, length: number): Uint8Array {
     return addSlice(result);
 }
 
-
 export function isHexString(value: any, length?: number): boolean {
-    if (typeof(value) !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
-        return false
+    if (typeof value !== "string" || !value.match(/^0x[0-9A-Fa-f]*$/)) {
+        return false;
     }
-    if (length && value.length !== 2 + 2 * length) { return false; }
+    if (length && value.length !== 2 + 2 * length) {
+        return false;
+    }
     return true;
 }
 
 const HexCharacters: string = "0123456789abcdef";
 
 export function hexlify(value: BytesLike | Hexable | number | bigint, options?: DataOptions): string {
-    if (!options) { options = { }; }
+    if (!options) {
+        options = {};
+    }
 
-    if (typeof(value) === "number") {
+    if (typeof value === "number") {
         logger.checkSafeUint53(value, "invalid hexlify value");
 
         let hex = "";
@@ -208,24 +232,30 @@ export function hexlify(value: BytesLike | Hexable | number | bigint, options?: 
         }
 
         if (hex.length) {
-            if (hex.length % 2) { hex = "0" + hex; }
+            if (hex.length % 2) {
+                hex = "0" + hex;
+            }
             return "0x" + hex;
         }
 
         return "0x00";
     }
 
-    if (typeof(value) === "bigint") {
+    if (typeof value === "bigint") {
         value = value.toString(16);
-        if (value.length % 2) { return ("0x0" + value); }
+        if (value.length % 2) {
+            return "0x0" + value;
+        }
         return "0x" + value;
     }
 
-    if (options.allowMissingPrefix && typeof(value) === "string" && value.substring(0, 2) !== "0x") {
-         value = "0x" + value;
+    if (options.allowMissingPrefix && typeof value === "string" && value.substring(0, 2) !== "0x") {
+        value = "0x" + value;
     }
 
-    if (isHexable(value)) { return value.toHexString(); }
+    if (isHexable(value)) {
+        return value.toHexString();
+    }
 
     if (isHexString(value)) {
         if ((<string>value).length % 2) {
@@ -243,8 +273,8 @@ export function hexlify(value: BytesLike | Hexable | number | bigint, options?: 
     if (isBytes(value)) {
         let result = "0x";
         for (let i = 0; i < value.length; i++) {
-             let v = value[i];
-             result += HexCharacters[(v & 0xf0) >> 4] + HexCharacters[v & 0x0f];
+            let v = value[i];
+            result += HexCharacters[(v & 0xf0) >> 4] + HexCharacters[v & 0x0f];
         }
         return result;
     }
@@ -261,9 +291,9 @@ function unoddify(value: BytesLike | Hexable | number): BytesLike | Hexable | nu
 }
 */
 export function hexDataLength(data: BytesLike) {
-    if (typeof(data) !== "string") {
+    if (typeof data !== "string") {
         data = hexlify(data);
-    } else if (!isHexString(data) || (data.length % 2)) {
+    } else if (!isHexString(data) || data.length % 2) {
         return null;
     }
 
@@ -271,10 +301,10 @@ export function hexDataLength(data: BytesLike) {
 }
 
 export function hexDataSlice(data: BytesLike, offset: number, endOffset?: number): string {
-    if (typeof(data) !== "string") {
+    if (typeof data !== "string") {
         data = hexlify(data);
-    } else if (!isHexString(data) || (data.length % 2)) {
-        logger.throwArgumentError("invalid hexData", "value", data );
+    } else if (!isHexString(data) || data.length % 2) {
+        logger.throwArgumentError("invalid hexData", "value", data);
     }
 
     offset = 2 + 2 * offset;
@@ -296,24 +326,30 @@ export function hexConcat(items: ReadonlyArray<BytesLike>): string {
 
 export function hexValue(value: BytesLike | Hexable | number | bigint): string {
     const trimmed = hexStripZeros(hexlify(value, { hexPad: "left" }));
-    if (trimmed === "0x") { return "0x0"; }
+    if (trimmed === "0x") {
+        return "0x0";
+    }
     return trimmed;
 }
 
 export function hexStripZeros(value: BytesLike): string {
-    if (typeof(value) !== "string") { value = hexlify(value); }
+    if (typeof value !== "string") {
+        value = hexlify(value);
+    }
 
     if (!isHexString(value)) {
         logger.throwArgumentError("invalid hex string", "value", value);
     }
     value = value.substring(2);
     let offset = 0;
-    while (offset < value.length && value[offset] === "0") { offset++; }
+    while (offset < value.length && value[offset] === "0") {
+        offset++;
+    }
     return "0x" + value.substring(offset);
 }
 
 export function hexZeroPad(value: BytesLike, length: number): string {
-    if (typeof(value) !== "string") {
+    if (typeof value !== "string") {
         value = hexlify(value);
     } else if (!isHexString(value)) {
         logger.throwArgumentError("invalid hex string", "value", value);
@@ -331,7 +367,6 @@ export function hexZeroPad(value: BytesLike, length: number): string {
 }
 
 export function splitSignature(signature: SignatureLike): Signature {
-
     const result = {
         r: "0x",
         s: "0x",
@@ -339,7 +374,7 @@ export function splitSignature(signature: SignatureLike): Signature {
         recoveryParam: 0,
         v: 0,
         yParityAndS: "0x",
-        compact: "0x"
+        compact: "0x",
     };
 
     if (isBytesLike(signature)) {
@@ -353,16 +388,13 @@ export function splitSignature(signature: SignatureLike): Signature {
 
             result.r = hexlify(bytes.slice(0, 32));
             result.s = hexlify(bytes.slice(32, 64));
-
         } else if (bytes.length === 65) {
             result.r = hexlify(bytes.slice(0, 32));
             result.s = hexlify(bytes.slice(32, 64));
             result.v = bytes[64];
         } else {
-
             logger.throwArgumentError("invalid signature string", "signature", signature);
         }
-
 
         // Allow a recid to be used as the v
         if (result.v < 27) {
@@ -377,9 +409,10 @@ export function splitSignature(signature: SignatureLike): Signature {
         result.recoveryParam = 1 - (result.v % 2);
 
         // Compute _vs from recoveryParam and s
-        if (result.recoveryParam) { bytes[32] |= 0x80; }
-        result._vs = hexlify(bytes.slice(32, 64))
-
+        if (result.recoveryParam) {
+            bytes[32] |= 0x80;
+        }
+        result._vs = hexlify(bytes.slice(32, 64));
     } else {
         result.r = signature.r;
         result.s = signature.s;
@@ -394,7 +427,7 @@ export function splitSignature(signature: SignatureLike): Signature {
             result._vs = hexlify(vs);
 
             // Set or check the recid
-            const recoveryParam = ((vs[0] >= 128) ? 1: 0);
+            const recoveryParam = vs[0] >= 128 ? 1 : 0;
             if (result.recoveryParam == null) {
                 result.recoveryParam = recoveryParam;
             } else if (result.recoveryParam !== recoveryParam) {
@@ -424,7 +457,7 @@ export function splitSignature(signature: SignatureLike): Signature {
             if (result.v == null) {
                 result.v = 27 + result.recoveryParam;
             } else {
-                const recId = (result.v === 0 || result.v === 1) ? result.v :(1 - (result.v % 2));
+                const recId = result.v === 0 || result.v === 1 ? result.v : 1 - (result.v % 2);
                 if (result.recoveryParam !== recId) {
                     logger.throwArgumentError("signature recoveryParam mismatch v", "signature", signature);
                 }
@@ -447,7 +480,9 @@ export function splitSignature(signature: SignatureLike): Signature {
         if (vs[0] >= 128) {
             logger.throwArgumentError("signature s out of range", "signature", signature);
         }
-        if (result.recoveryParam) { vs[0] |= 0x80; }
+        if (result.recoveryParam) {
+            vs[0] |= 0x80;
+        }
         const _vs = hexlify(vs);
 
         if (result._vs) {
@@ -474,10 +509,5 @@ export function splitSignature(signature: SignatureLike): Signature {
 export function joinSignature(signature: SignatureLike): string {
     signature = splitSignature(signature);
 
-    return hexlify(concat([
-         signature.r,
-         signature.s,
-         (signature.recoveryParam ? "0x1c": "0x1b")
-    ]));
+    return hexlify(concat([signature.r, signature.s, signature.recoveryParam ? "0x1c" : "0x1b"]));
 }
-

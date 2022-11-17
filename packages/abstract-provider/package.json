@@ -1,47 +1,47 @@
 {
-  "author": "Richard Moore <me@ricmoo.com>",
-  "dependencies": {
-    "@ethersproject/bignumber": "workspace:^",
-    "@ethersproject/bytes": "workspace:^",
-    "@ethersproject/logger": "workspace:^",
-    "@ethersproject/networks": "workspace:^",
-    "@ethersproject/properties": "workspace:^",
-    "@ethersproject/transactions": "workspace:^",
-    "@ethersproject/web": "workspace:^"
-  },
-  "description": "An Abstract Class for describing an Ethereum Provider for ethers.",
-  "ethereum": "donations.ethers.eth",
-  "funding": [
-    {
-      "type": "individual",
-      "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
+    "author": "Richard Moore <me@ricmoo.com>",
+    "dependencies": {
+        "@ethersproject/bignumber": "workspace:^",
+        "@ethersproject/bytes": "workspace:^",
+        "@ethersproject/logger": "workspace:^",
+        "@ethersproject/networks": "workspace:^",
+        "@ethersproject/properties": "workspace:^",
+        "@ethersproject/transactions": "workspace:^",
+        "@ethersproject/web": "workspace:^"
     },
-    {
-      "type": "individual",
-      "url": "https://www.buymeacoffee.com/ricmoo"
-    }
-  ],
-  "keywords": [
-    "Ethereum",
-    "ethers"
-  ],
-  "license": "MIT",
-  "main": "./lib/index.js",
-  "module": "./lib.esm/index.js",
-  "name": "@ethersproject/abstract-provider",
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "directory": "packages/abstract-provider",
-    "type": "git",
-    "url": "git://github.com/ethers-io/ethers.js.git"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "sideEffects": false,
-  "tarballHash": "0x952cf2ca65f6e38799386cab1c8595e8f849360128bc61fb28de2b595bbfaad9",
-  "types": "./lib/index.d.ts",
-  "version": "5.7.0"
+    "description": "An Abstract Class for describing an Ethereum Provider for ethers.",
+    "ethereum": "donations.ethers.eth",
+    "funding": [
+        {
+            "type": "individual",
+            "url": "https://gitcoin.co/grants/13/ethersjs-complete-simple-and-tiny-2"
+        },
+        {
+            "type": "individual",
+            "url": "https://www.buymeacoffee.com/ricmoo"
+        }
+    ],
+    "keywords": [
+        "Ethereum",
+        "ethers"
+    ],
+    "license": "MIT",
+    "main": "./lib/index.js",
+    "module": "./lib.esm/index.js",
+    "name": "@ethersproject/abstract-provider",
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "directory": "packages/abstract-provider",
+        "type": "git",
+        "url": "git://github.com/ethers-io/ethers.js.git"
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "sideEffects": false,
+    "tarballHash": "0x952cf2ca65f6e38799386cab1c8595e8f849360128bc61fb28de2b595bbfaad9",
+    "types": "./lib/index.d.ts",
+    "version": "5.7.0"
 }

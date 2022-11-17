@@ -3,7 +3,6 @@
 import { Coder, Reader, Writer } from "./abstract-coder";
 
 export class BooleanCoder extends Coder {
-
     constructor(localName: string) {
         super("bool", "bool", localName, false);
     }
@@ -13,11 +12,10 @@ export class BooleanCoder extends Coder {
     }
 
     encode(writer: Writer, value: boolean): number {
-        return writer.writeValue(value ? 1: 0);
+        return writer.writeValue(value ? 1 : 0);
     }
 
     decode(reader: Reader): any {
         return reader.coerce(this.type, !reader.readValue().isZero());
     }
 }
-

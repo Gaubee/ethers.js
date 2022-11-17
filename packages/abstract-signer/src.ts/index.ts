@@ -10,7 +10,20 @@ import { version } from "./_version";
 const logger = new Logger(version);
 
 const allowedTransactionKeys: Array<string> = [
-    "accessList", "ccipReadEnabled", "chainId", "customData", "data", "from", "gasLimit", "gasPrice", "maxFeePerGas", "maxPriorityFeePerGas", "nonce", "to", "type", "value"
+    "accessList",
+    "ccipReadEnabled",
+    "chainId",
+    "customData",
+    "data",
+    "from",
+    "gasLimit",
+    "gasPrice",
+    "maxFeePerGas",
+    "maxPriorityFeePerGas",
+    "nonce",
+    "to",
+    "type",
+    "value",
 ];
 
 const forwardErrors = [
@@ -28,12 +41,12 @@ export interface TypedDataDomain {
     chainId?: BigNumberish;
     verifyingContract?: string;
     salt?: BytesLike;
-};
+}
 
 export interface TypedDataField {
     name: string;
     type: string;
-};
+}
 
 // Sub-classes of Signer may optionally extend this interface to indicate
 // they have a private key available synchronously
@@ -52,7 +65,11 @@ export interface ExternallyOwnedAccount {
 // @TODO: This is a temporary measure to preserve backwards compatibility
 //        In v6, the method on TypedDataSigner will be added to Signer
 export interface TypedDataSigner {
-    _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>): Promise<string>;
+    _signTypedData(
+        domain: TypedDataDomain,
+        types: Record<string, Array<TypedDataField>>,
+        value: Record<string, any>,
+    ): Promise<string>;
 }
 
 export abstract class Signer {
@@ -62,7 +79,7 @@ export abstract class Signer {
     // Sub-classes MUST implement these
 
     // Returns the checksum address
-    abstract getAddress(): Promise<string>
+    abstract getAddress(): Promise<string>;
 
     // Returns the signed prefixed-message. This MUST treat:
     // - Bytes as a binary message
@@ -82,14 +99,12 @@ export abstract class Signer {
 
     readonly _isSigner: boolean;
 
-
     ///////////////////
     // Sub-classes MUST call super
     constructor() {
         logger.checkAbstract(new.target, Signer);
         defineReadOnly(this, "_isSigner", true);
     }
-
 
     ///////////////////
     // Sub-classes MAY override these
@@ -142,13 +157,10 @@ export abstract class Signer {
         return await this.provider.getFeeData();
     }
 
-
     async resolveName(name: string): Promise<string> {
         this._checkProvider("resolveName");
         return await this.provider.resolveName(name);
     }
-
-
 
     // Checks a transaction does not contain invalid keys and if
     // no "from" is provided, populates it.
@@ -170,13 +182,9 @@ export abstract class Signer {
 
         if (tx.from == null) {
             tx.from = this.getAddress();
-
         } else {
             // Make sure any provided address matches this signer
-            tx.from = Promise.all([
-                Promise.resolve(tx.from),
-                this.getAddress()
-            ]).then((result) => {
+            tx.from = Promise.all([Promise.resolve(tx.from), this.getAddress()]).then((result) => {
                 if (result[0].toLowerCase() !== result[1].toLowerCase()) {
                     logger.throwArgumentError("from address mismatch", "transaction", transaction);
                 }
@@ -195,12 +203,13 @@ export abstract class Signer {
     // Notes:
     //  - We allow gasPrice for EIP-1559 as long as it matches maxFeePerGas
     async populateTransaction(transaction: Deferrable<TransactionRequest>): Promise<TransactionRequest> {
-
-        const tx: Deferrable<TransactionRequest> = await resolveProperties(this.checkTransaction(transaction))
+        const tx: Deferrable<TransactionRequest> = await resolveProperties(this.checkTransaction(transaction));
 
         if (tx.to != null) {
             tx.to = Promise.resolve(tx.to).then(async (to) => {
-                if (to == null) { return null; }
+                if (to == null) {
+                    return null;
+                }
                 const address = await this.resolveName(to);
                 if (address == null) {
                     logger.throwArgumentError("provided ENS name resolves to null", "tx.to", to);
@@ -209,29 +218,32 @@ export abstract class Signer {
             });
 
             // Prevent this error from causing an UnhandledPromiseException
-            tx.to.catch((error) => {  });
+            tx.to.catch((error) => {});
         }
 
         // Do not allow mixing pre-eip-1559 and eip-1559 properties
-        const hasEip1559 = (tx.maxFeePerGas != null || tx.maxPriorityFeePerGas != null);
+        const hasEip1559 = tx.maxFeePerGas != null || tx.maxPriorityFeePerGas != null;
         if (tx.gasPrice != null && (tx.type === 2 || hasEip1559)) {
             logger.throwArgumentError("eip-1559 transaction do not support gasPrice", "transaction", transaction);
         } else if ((tx.type === 0 || tx.type === 1) && hasEip1559) {
-            logger.throwArgumentError("pre-eip-1559 transaction do not support maxFeePerGas/maxPriorityFeePerGas", "transaction", transaction);
+            logger.throwArgumentError(
+                "pre-eip-1559 transaction do not support maxFeePerGas/maxPriorityFeePerGas",
+                "transaction",
+                transaction,
+            );
         }
 
-        if ((tx.type === 2 || tx.type == null) && (tx.maxFeePerGas != null && tx.maxPriorityFeePerGas != null)) {
+        if ((tx.type === 2 || tx.type == null) && tx.maxFeePerGas != null && tx.maxPriorityFeePerGas != null) {
             // Fully-formed EIP-1559 transaction (skip getFeeData)
             tx.type = 2;
-
         } else if (tx.type === 0 || tx.type === 1) {
             // Explicit Legacy or EIP-2930 transaction
 
             // Populate missing gasPrice
-            if (tx.gasPrice == null) { tx.gasPrice = this.getGasPrice(); }
-
+            if (tx.gasPrice == null) {
+                tx.gasPrice = this.getGasPrice();
+            }
         } else {
-
             // We need to get fee data to determine things
             const feeData = await this.getFeeData();
 
@@ -251,46 +263,54 @@ export abstract class Signer {
                         delete tx.gasPrice;
                         tx.maxFeePerGas = gasPrice;
                         tx.maxPriorityFeePerGas = gasPrice;
-
                     } else {
                         // Populate missing fee data
-                        if (tx.maxFeePerGas == null) { tx.maxFeePerGas = feeData.maxFeePerGas; }
-                        if (tx.maxPriorityFeePerGas == null) { tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas; }
+                        if (tx.maxFeePerGas == null) {
+                            tx.maxFeePerGas = feeData.maxFeePerGas;
+                        }
+                        if (tx.maxPriorityFeePerGas == null) {
+                            tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
+                        }
                     }
-
                 } else if (feeData.gasPrice != null) {
                     // Network doesn't support EIP-1559...
 
                     // ...but they are trying to use EIP-1559 properties
                     if (hasEip1559) {
                         logger.throwError("network does not support EIP-1559", Logger.errors.UNSUPPORTED_OPERATION, {
-                            operation: "populateTransaction"
+                            operation: "populateTransaction",
                         });
                     }
 
                     // Populate missing fee data
-                    if (tx.gasPrice == null) { tx.gasPrice = feeData.gasPrice; }
+                    if (tx.gasPrice == null) {
+                        tx.gasPrice = feeData.gasPrice;
+                    }
 
                     // Explicitly set untyped transaction to legacy
                     tx.type = 0;
-
                 } else {
                     // getFeeData has failed us.
                     logger.throwError("failed to get consistent fee data", Logger.errors.UNSUPPORTED_OPERATION, {
-                        operation: "signer.getFeeData"
+                        operation: "signer.getFeeData",
                     });
                 }
-
             } else if (tx.type === 2) {
                 // Explicitly using EIP-1559
 
                 // Populate missing fee data
-                if (tx.maxFeePerGas == null) { tx.maxFeePerGas = feeData.maxFeePerGas; }
-                if (tx.maxPriorityFeePerGas == null) { tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas; }
+                if (tx.maxFeePerGas == null) {
+                    tx.maxFeePerGas = feeData.maxFeePerGas;
+                }
+                if (tx.maxPriorityFeePerGas == null) {
+                    tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
+                }
             }
         }
 
-        if (tx.nonce == null) { tx.nonce = this.getTransactionCount("pending"); }
+        if (tx.nonce == null) {
+            tx.nonce = this.getTransactionCount("pending");
+        }
 
         if (tx.gasLimit == null) {
             tx.gasLimit = this.estimateGas(tx).catch((error) => {
@@ -298,20 +318,21 @@ export abstract class Signer {
                     throw error;
                 }
 
-                return logger.throwError("cannot estimate gas; transaction may fail or may require manual gas limit", Logger.errors.UNPREDICTABLE_GAS_LIMIT, {
-                    error: error,
-                    tx: tx
-                });
+                return logger.throwError(
+                    "cannot estimate gas; transaction may fail or may require manual gas limit",
+                    Logger.errors.UNPREDICTABLE_GAS_LIMIT,
+                    {
+                        error: error,
+                        tx: tx,
+                    },
+                );
             });
         }
 
         if (tx.chainId == null) {
             tx.chainId = this.getChainId();
         } else {
-            tx.chainId = Promise.all([
-                Promise.resolve(tx.chainId),
-                this.getChainId()
-            ]).then((results) => {
+            tx.chainId = Promise.all([Promise.resolve(tx.chainId), this.getChainId()]).then((results) => {
                 if (results[1] !== 0 && results[0] !== results[1]) {
                     logger.throwArgumentError("chainId address mismatch", "transaction", transaction);
                 }
@@ -322,13 +343,14 @@ export abstract class Signer {
         return await resolveProperties(tx);
     }
 
-
     ///////////////////
     // Sub-classes SHOULD leave these alone
 
     _checkProvider(operation?: string): void {
-        if (!this.provider) { logger.throwError("missing provider", Logger.errors.UNSUPPORTED_OPERATION, {
-            operation: (operation || "_checkProvider") });
+        if (!this.provider) {
+            logger.throwError("missing provider", Logger.errors.UNSUPPORTED_OPERATION, {
+                operation: operation || "_checkProvider",
+            });
         }
     }
 
@@ -364,7 +386,11 @@ export class VoidSigner extends Signer implements TypedDataSigner {
         return this._fail("VoidSigner cannot sign transactions", "signTransaction");
     }
 
-    _signTypedData(domain: TypedDataDomain, types: Record<string, Array<TypedDataField>>, value: Record<string, any>): Promise<string> {
+    _signTypedData(
+        domain: TypedDataDomain,
+        types: Record<string, Array<TypedDataField>>,
+        value: Record<string, any>,
+    ): Promise<string> {
         return this._fail("VoidSigner cannot sign typed data", "signTypedData");
     }
 
@@ -372,4 +398,3 @@ export class VoidSigner extends Signer implements TypedDataSigner {
         return new VoidSigner(this.address, provider);
     }
 }
-

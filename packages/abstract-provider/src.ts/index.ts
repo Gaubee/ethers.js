@@ -14,18 +14,17 @@ const logger = new Logger(version);
 ///////////////////////////////
 // Exported Types
 
-
 export type TransactionRequest = {
-    to?: string,
-    from?: string,
-    nonce?: BigNumberish,
+    to?: string;
+    from?: string;
+    nonce?: BigNumberish;
 
-    gasLimit?: BigNumberish,
-    gasPrice?: BigNumberish,
+    gasLimit?: BigNumberish;
+    gasPrice?: BigNumberish;
 
-    data?: BytesLike,
-    value?: BigNumberish,
-    chainId?: number
+    data?: BytesLike;
+    value?: BigNumberish;
+    chainId?: number;
 
     type?: number;
     accessList?: AccessListish;
@@ -35,27 +34,27 @@ export type TransactionRequest = {
 
     customData?: Record<string, any>;
     ccipReadEnabled?: boolean;
-}
+};
 
 export interface TransactionResponse extends Transaction {
     hash: string;
 
     // Only if a transaction has been mined
-    blockNumber?: number,
-    blockHash?: string,
-    timestamp?: number,
+    blockNumber?: number;
+    blockHash?: string;
+    timestamp?: number;
 
-    confirmations: number,
+    confirmations: number;
 
     // Not optional (as it is in Transaction)
     from: string;
 
     // The raw transaction
-    raw?: string,
+    raw?: string;
 
     // This function waits until the transaction has been mined
-    wait: (confirmations?: number) => Promise<TransactionReceipt>
-};
+    wait: (confirmations?: number) => Promise<TransactionReceipt>;
+}
 
 export type BlockTag = string | number;
 
@@ -86,7 +85,6 @@ export interface BlockWithTransactions extends _Block {
     transactions: Array<TransactionResponse>;
 }
 
-
 export interface Log {
     blockNumber: number;
     blockHash: string;
@@ -106,22 +104,22 @@ export interface Log {
 export interface TransactionReceipt {
     to: string;
     from: string;
-    contractAddress: string,
-    transactionIndex: number,
-    root?: string,
-    gasUsed: BigNumber,
-    logsBloom: string,
-    blockHash: string,
-    transactionHash: string,
-    logs: Array<Log>,
-    blockNumber: number,
-    confirmations: number,
-    cumulativeGasUsed: BigNumber,
-    effectiveGasPrice: BigNumber,
-    byzantium: boolean,
+    contractAddress: string;
+    transactionIndex: number;
+    root?: string;
+    gasUsed: BigNumber;
+    logsBloom: string;
+    blockHash: string;
+    transactionHash: string;
+    logs: Array<Log>;
+    blockNumber: number;
+    confirmations: number;
+    cumulativeGasUsed: BigNumber;
+    effectiveGasPrice: BigNumber;
+    byzantium: boolean;
     type: number;
-    status?: number
-};
+    status?: number;
+}
 
 export interface FeeData {
     lastBaseFeePerGas: null | BigNumber;
@@ -136,8 +134,8 @@ export interface EventFilter {
 }
 
 export interface Filter extends EventFilter {
-    fromBlock?: BlockTag,
-    toBlock?: BlockTag,
+    fromBlock?: BlockTag;
+    toBlock?: BlockTag;
 }
 
 export interface FilterByBlockHash extends EventFilter {
@@ -171,8 +169,8 @@ export class BlockForkEvent extends ForkEvent {
         super({
             _isForkEvent: true,
             _isBlockForkEvent: true,
-            expiry: (expiry || 0),
-            blockHash: blockHash
+            expiry: expiry || 0,
+            blockHash: blockHash,
         });
     }
 }
@@ -190,8 +188,8 @@ export class TransactionForkEvent extends ForkEvent {
         super({
             _isForkEvent: true,
             _isTransactionForkEvent: true,
-            expiry: (expiry || 0),
-            hash: hash
+            expiry: expiry || 0,
+            hash: hash,
         });
     }
 }
@@ -211,9 +209,9 @@ export class TransactionOrderForkEvent extends ForkEvent {
         super({
             _isForkEvent: true,
             _isTransactionOrderForkEvent: true,
-            expiry: (expiry || 0),
+            expiry: expiry || 0,
             beforeHash: beforeHash,
-            afterHash: afterHash
+            afterHash: afterHash,
         });
     }
 }
@@ -225,7 +223,6 @@ export type Listener = (...args: Array<any>) => void;
 ///////////////////////////////
 // Exported Abstracts
 export abstract class Provider implements OnceBlockable {
-
     // Network
     abstract getNetwork(): Promise<Network>;
 
@@ -239,10 +236,12 @@ export abstract class Provider implements OnceBlockable {
                 // @TODO: Why is this now failing on Calaveras?
                 //console.log(error);
                 return null;
-            })
+            }),
         });
 
-        let lastBaseFeePerGas = null, maxFeePerGas = null, maxPriorityFeePerGas = null;
+        let lastBaseFeePerGas = null,
+            maxFeePerGas = null,
+            maxPriorityFeePerGas = null;
 
         if (block && block.baseFeePerGas) {
             // We may want to compute this more accurately in the future,
@@ -257,19 +256,34 @@ export abstract class Provider implements OnceBlockable {
     }
 
     // Account
-    abstract getBalance(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<BigNumber>;
-    abstract getTransactionCount(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<number>;
-    abstract getCode(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string> ;
-    abstract getStorageAt(addressOrName: string | Promise<string>, position: BigNumberish | Promise<BigNumberish>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string>;
+    abstract getBalance(
+        addressOrName: string | Promise<string>,
+        blockTag?: BlockTag | Promise<BlockTag>,
+    ): Promise<BigNumber>;
+    abstract getTransactionCount(
+        addressOrName: string | Promise<string>,
+        blockTag?: BlockTag | Promise<BlockTag>,
+    ): Promise<number>;
+    abstract getCode(addressOrName: string | Promise<string>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string>;
+    abstract getStorageAt(
+        addressOrName: string | Promise<string>,
+        position: BigNumberish | Promise<BigNumberish>,
+        blockTag?: BlockTag | Promise<BlockTag>,
+    ): Promise<string>;
 
     // Execution
     abstract sendTransaction(signedTransaction: string | Promise<string>): Promise<TransactionResponse>;
-    abstract call(transaction: Deferrable<TransactionRequest>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string>;
+    abstract call(
+        transaction: Deferrable<TransactionRequest>,
+        blockTag?: BlockTag | Promise<BlockTag>,
+    ): Promise<string>;
     abstract estimateGas(transaction: Deferrable<TransactionRequest>): Promise<BigNumber>;
 
     // Queries
     abstract getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<Block>;
-    abstract getBlockWithTransactions(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<BlockWithTransactions>;
+    abstract getBlockWithTransactions(
+        blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>,
+    ): Promise<BlockWithTransactions>;
     abstract getTransaction(transactionHash: string): Promise<TransactionResponse>;
     abstract getTransactionReceipt(transactionHash: string): Promise<TransactionReceipt>;
 
@@ -283,7 +297,7 @@ export abstract class Provider implements OnceBlockable {
     // Event Emitter (ish)
     abstract on(eventName: EventType, listener: Listener): Provider;
     abstract once(eventName: EventType, listener: Listener): Provider;
-    abstract emit(eventName: EventType, ...args: Array<any>): boolean
+    abstract emit(eventName: EventType, ...args: Array<any>): boolean;
     abstract listenerCount(eventName?: EventType): number;
     abstract listeners(eventName?: EventType): Array<Listener>;
     abstract off(eventName: EventType, listener?: Listener): Provider;
@@ -300,7 +314,11 @@ export abstract class Provider implements OnceBlockable {
     }
 
     // @TODO: This *could* be implemented here, but would pull in events...
-    abstract waitForTransaction(transactionHash: string, confirmations?: number, timeout?: number): Promise<TransactionReceipt>;
+    abstract waitForTransaction(
+        transactionHash: string,
+        confirmations?: number,
+        timeout?: number,
+    ): Promise<TransactionReceipt>;
 
     readonly _isProvider: boolean;
 
@@ -313,7 +331,7 @@ export abstract class Provider implements OnceBlockable {
         return !!(value && value._isProvider);
     }
 
-/*
+    /*
     static getResolver(network: Network, callable: CallTransactionable, namehash: string): string {
         // No ENS...
         if (!network.ensAddress) {

@@ -1,5 +1,4 @@
-Abstract Signer
-===============
+# Abstract Signer
 
 This sub-module is part of the [ethers project](https://github.com/ethers-io/ethers.js).
 
@@ -10,25 +9,21 @@ dedicated signing service such as Clef),
 
 For more information, see the [documentation](https://docs.ethers.io/v5/api/signer/).
 
-Importing
----------
+## Importing
 
 Most users will prefer to use the [umbrella package](https://www.npmjs.com/package/ethers),
 but for those with more specific needs, individual components can be imported.
 
 ```javascript
 const {
-
     Signer,
     VoidSigner,
 
     // Types
-    ExternallyOwnedAccount
-
+    ExternallyOwnedAccount,
 } = require("@ethersproject/abstract-signer");
 ```
 
-License
--------
+## License
 
 MIT License

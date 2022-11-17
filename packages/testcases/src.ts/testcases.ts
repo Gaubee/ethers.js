@@ -1,4 +1,3 @@
-
 /*
 export interface TestCase {
     name: string;
@@ -9,20 +8,20 @@ export interface BigNumber {
     testcase: string;
     value: string | number;
     expectedValue: string;
-};
+}
 
 export interface Hash {
     data: string;
     keccak256: string;
     sha256: string;
     sha512: string;
-};
+}
 
 export interface HDWalletNode {
     path: string;
     address: string;
     privateKey: string;
-};
+}
 
 export interface HDWallet {
     name: string;
@@ -33,8 +32,8 @@ export interface HDWallet {
     entropy: string;
     mnemonic: string;
 
-    hdnodes: Array<HDWalletNode>
-};
+    hdnodes: Array<HDWalletNode>;
+}
 
 export interface Nameprep {
     comment: string;
@@ -42,7 +41,7 @@ export interface Nameprep {
     output: Array<number>;
     rc?: string;
     flags?: string;
-};
+}
 
 export interface Wallet {
     name: string;
@@ -54,34 +53,34 @@ export interface Wallet {
     mnemonic?: string;
     password?: string;
     json: string;
-};
+}
 
 export interface Wordlist {
     locale: string;
     content: string;
-};
+}
 
 export interface Unit {
     name: string;
 
-    ether: string,
-    ether_format: string,
-    wei: string,
+    ether: string;
+    ether_format: string;
+    wei: string;
 
-    kwei?: string,
-    mwei?: string,
-    gwei?: string,
-    szabo?: string,
-    finney?: string,
-    satoshi?: string
+    kwei?: string;
+    mwei?: string;
+    gwei?: string;
+    szabo?: string;
+    finney?: string;
+    satoshi?: string;
 
-    kwei_format?: string,
-    mwei_format?: string,
-    gwei_format?: string,
-    szabo_format?: string,
-    finney_format?: string,
-    satoshi_format?: string
-};
+    kwei_format?: string;
+    mwei_format?: string;
+    gwei_format?: string;
+    szabo_format?: string;
+    finney_format?: string;
+    satoshi_format?: string;
+}
 
 export interface SignedTransaction {
     name: string;
@@ -89,10 +88,10 @@ export interface SignedTransaction {
     accountAddress: string;
     privateKey: string;
 
-    signedTransaction: string
+    signedTransaction: string;
     unsignedTransaction: string;
 
-    signedTransactionChainId5: string
+    signedTransactionChainId5: string;
     unsignedTransactionChainId5: string;
 
     nonce: number;
@@ -101,7 +100,7 @@ export interface SignedTransaction {
     to: string;
     value: string;
     data: string;
-};
+}
 
 export interface TypedTransaction {
     name: string;
@@ -120,8 +119,8 @@ export interface TypedTransaction {
         value: string;
         chainId: number;
         accessList: Array<{
-            address: string,
-            storageKeys: Array<string>
+            address: string;
+            storageKeys: Array<string>;
         }>;
     };
 
@@ -138,9 +137,9 @@ export interface Eip712 {
         chainId?: number;
         verifyingContract?: string;
         salt?: string;
-    },
+    };
     primaryType: string;
-    types: Record<string, Array<{ name: string, type: string }>>;
+    types: Record<string, Array<{ name: string; type: string }>>;
     data: Record<string, any>;
     encoded: string;
     digest: string;
@@ -152,5 +151,4 @@ export interface Eip712 {
     // Not all testcases have these
     privateKey?: string;
     signature?: string;
-};
-
+}

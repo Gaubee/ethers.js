@@ -1,5 +1,4 @@
-Abstract Provider
-=================
+# Abstract Provider
 
 This sub-module is part of the [ethers project](https://github.com/ethers-io/ethers.js).
 
@@ -14,15 +13,13 @@ or [Wallet](https://www.npmjs.com/package/@ethersproject/wallet) sub-modules.
 
 For more information, see the [documentation](https://docs.ethers.io/v5/api/providers/).
 
-Importing
----------
+## Importing
 
 Most users will prefer to use the [umbrella package](https://www.npmjs.com/package/ethers),
 but for those with more specific needs, individual components can be imported.
 
 ```javascript
 const {
-
     Provider,
 
     ForkEvent,
@@ -47,12 +44,10 @@ const {
     FilterByBlockHash,
 
     EventType,
-    Listener
-
+    Listener,
 } = require("@ethersproject/abstract-provider");
 ```
 
-License
--------
+## License
 
 MIT License

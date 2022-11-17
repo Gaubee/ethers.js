@@ -6,42 +6,41 @@ const logger = new Logger(version);
 
 import { Network, Networkish } from "./types";
 
-export {
-    Network,
-    Networkish
-};
+export { Network, Networkish };
 
 type DefaultProviderFunc = (providers: any, options?: any) => any;
 
 interface Renetworkable extends DefaultProviderFunc {
     renetwork: (network: Network) => DefaultProviderFunc;
-};
+}
 
 function isRenetworkable(value: any): value is Renetworkable {
-    return (value && typeof(value.renetwork) === "function");
+    return value && typeof value.renetwork === "function";
 }
 
 function ethDefaultProvider(network: string | Network): Renetworkable {
-    const func = function(providers: any, options?: any): any {
-        if (options == null) { options = { }; }
+    const func = function (providers: any, options?: any): any {
+        if (options == null) {
+            options = {};
+        }
         const providerList: Array<any> = [];
 
         if (providers.InfuraProvider && options.infura !== "-") {
             try {
                 providerList.push(new providers.InfuraProvider(network, options.infura));
-            } catch(error) { }
+            } catch (error) {}
         }
 
         if (providers.EtherscanProvider && options.etherscan !== "-") {
             try {
                 providerList.push(new providers.EtherscanProvider(network, options.etherscan));
-            } catch(error) { }
+            } catch (error) {}
         }
 
         if (providers.AlchemyProvider && options.alchemy !== "-") {
             try {
                 providerList.push(new providers.AlchemyProvider(network, options.alchemy));
-            } catch(error) { }
+            } catch (error) {}
         }
 
         if (providers.PocketProvider && options.pocket !== "-") {
@@ -49,32 +48,34 @@ function ethDefaultProvider(network: string | Network): Renetworkable {
             // network does not handle the Berlin hardfork, which is
             // live on these ones.
             // @TODO: This goes away once Pocket has upgraded their nodes
-            const skip = [ "goerli", "ropsten", "rinkeby", "sepolia" ];
+            const skip = ["goerli", "ropsten", "rinkeby", "sepolia"];
             try {
                 const provider = new providers.PocketProvider(network, options.pocket);
                 if (provider.network && skip.indexOf(provider.network.name) === -1) {
                     providerList.push(provider);
                 }
-            } catch(error) { }
+            } catch (error) {}
         }
 
         if (providers.CloudflareProvider && options.cloudflare !== "-") {
             try {
                 providerList.push(new providers.CloudflareProvider(network));
-            } catch(error) { }
+            } catch (error) {}
         }
 
         if (providers.AnkrProvider && options.ankr !== "-") {
             try {
-                const skip = [ "ropsten" ];
+                const skip = ["ropsten"];
                 const provider = new providers.AnkrProvider(network, options.ankr);
                 if (provider.network && skip.indexOf(provider.network.name) === -1) {
                     providerList.push(provider);
                 }
-            } catch(error) { }
+            } catch (error) {}
         }
 
-        if (providerList.length === 0) { return null; }
+        if (providerList.length === 0) {
+            return null;
+        }
 
         if (providers.FallbackProvider) {
             let quorum = 1;
@@ -89,7 +90,7 @@ function ethDefaultProvider(network: string | Network): Renetworkable {
         return providerList[0];
     };
 
-    func.renetwork = function(network: Network) {
+    func.renetwork = function (network: Network) {
         return ethDefaultProvider(network);
     };
 
@@ -97,7 +98,7 @@ function ethDefaultProvider(network: string | Network): Renetworkable {
 }
 
 function etcDefaultProvider(url: string, network: string | Network): Renetworkable {
-    const func = function(providers: any, options?: any): any {
+    const func = function (providers: any, options?: any): any {
         if (providers.JsonRpcProvider) {
             return new providers.JsonRpcProvider(url, network);
         }
@@ -105,7 +106,7 @@ function etcDefaultProvider(url: string, network: string | Network): Renetworkab
         return null;
     };
 
-    func.renetwork = function(network: Network) {
+    func.renetwork = function (network: Network) {
         return etcDefaultProvider(url, network);
     };
 
@@ -116,20 +117,20 @@ const homestead: Network = {
     chainId: 1,
     ensAddress: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
     name: "homestead",
-    _defaultProvider: ethDefaultProvider("homestead")
+    _defaultProvider: ethDefaultProvider("homestead"),
 };
 
 const ropsten: Network = {
     chainId: 3,
     ensAddress: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
     name: "ropsten",
-    _defaultProvider: ethDefaultProvider("ropsten")
+    _defaultProvider: ethDefaultProvider("ropsten"),
 };
 
 const classicMordor: Network = {
     chainId: 63,
     name: "classicMordor",
-    _defaultProvider: etcDefaultProvider("https://www.ethercluster.com/mordor", "classicMordor")
+    _defaultProvider: etcDefaultProvider("https://www.ethercluster.com/mordor", "classicMordor"),
 };
 
 // See: https://chainlist.org
@@ -148,20 +149,20 @@ const networks: { [name: string]: Network } = {
         chainId: 4,
         ensAddress: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
         name: "rinkeby",
-        _defaultProvider: ethDefaultProvider("rinkeby")
+        _defaultProvider: ethDefaultProvider("rinkeby"),
     },
 
     kovan: {
         chainId: 42,
         name: "kovan",
-        _defaultProvider: ethDefaultProvider("kovan")
+        _defaultProvider: ethDefaultProvider("kovan"),
     },
 
     goerli: {
         chainId: 5,
         ensAddress: "0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e",
         name: "goerli",
-        _defaultProvider: ethDefaultProvider("goerli")
+        _defaultProvider: ethDefaultProvider("goerli"),
     },
 
     kintsugi: { chainId: 1337702, name: "kintsugi" },
@@ -169,15 +170,14 @@ const networks: { [name: string]: Network } = {
     sepolia: {
         chainId: 11155111,
         name: "sepolia",
-        _defaultProvider: ethDefaultProvider("sepolia")
+        _defaultProvider: ethDefaultProvider("sepolia"),
     },
-
 
     // ETC (See: #351)
     classic: {
         chainId: 61,
         name: "classic",
-        _defaultProvider: etcDefaultProvider("https:/\/www.ethercluster.com/etc", "classic")
+        _defaultProvider: etcDefaultProvider("https://www.ethercluster.com/etc", "classic"),
     },
 
     classicMorden: { chainId: 62, name: "classicMorden" },
@@ -188,7 +188,7 @@ const networks: { [name: string]: Network } = {
     classicKotti: {
         chainId: 6,
         name: "classicKotti",
-        _defaultProvider: etcDefaultProvider("https:/\/www.ethercluster.com/kotti", "classicKotti")
+        _defaultProvider: etcDefaultProvider("https://www.ethercluster.com/kotti", "classicKotti"),
     },
 
     xdai: { chainId: 100, name: "xdai" },
@@ -196,14 +196,14 @@ const networks: { [name: string]: Network } = {
     matic: {
         chainId: 137,
         name: "matic",
-        _defaultProvider: ethDefaultProvider("matic")
+        _defaultProvider: ethDefaultProvider("matic"),
     },
     maticmum: { chainId: 80001, name: "maticmum" },
 
     optimism: {
         chainId: 10,
         name: "optimism",
-        _defaultProvider: ethDefaultProvider("optimism")
+        _defaultProvider: ethDefaultProvider("optimism"),
     },
     "optimism-kovan": { chainId: 69, name: "optimism-kovan" },
     "optimism-goerli": { chainId: 420, name: "optimism-goerli" },
@@ -214,7 +214,7 @@ const networks: { [name: string]: Network } = {
 
     bnb: { chainId: 56, name: "bnb" },
     bnbt: { chainId: 97, name: "bnbt" },
-}
+};
 
 /**
  *  getNetwork
@@ -224,43 +224,47 @@ const networks: { [name: string]: Network } = {
  */
 export function getNetwork(network: Networkish): Network {
     // No network (null)
-    if (network == null) { return null; }
+    if (network == null) {
+        return null;
+    }
 
-    if (typeof(network) === "number") {
+    if (typeof network === "number") {
         for (const name in networks) {
             const standard = networks[name];
             if (standard.chainId === network) {
                 return {
                     name: standard.name,
                     chainId: standard.chainId,
-                    ensAddress: (standard.ensAddress || null),
-                    _defaultProvider: (standard._defaultProvider || null)
+                    ensAddress: standard.ensAddress || null,
+                    _defaultProvider: standard._defaultProvider || null,
                 };
             }
         }
 
         return {
             chainId: network,
-            name: "unknown"
+            name: "unknown",
         };
     }
 
-    if (typeof(network) === "string") {
+    if (typeof network === "string") {
         const standard = networks[network];
-        if (standard == null) { return null; }
+        if (standard == null) {
+            return null;
+        }
         return {
             name: standard.name,
             chainId: standard.chainId,
             ensAddress: standard.ensAddress,
-            _defaultProvider: (standard._defaultProvider || null)
+            _defaultProvider: standard._defaultProvider || null,
         };
     }
 
-    const standard  = networks[network.name];
+    const standard = networks[network.name];
 
     // Not a standard network; check that it is a valid network in general
     if (!standard) {
-        if (typeof(network.chainId) !== "number") {
+        if (typeof network.chainId !== "number") {
             logger.throwArgumentError("invalid network chainId", "network", network);
         }
         return network;
@@ -286,7 +290,7 @@ export function getNetwork(network: Networkish): Network {
     return {
         name: network.name,
         chainId: standard.chainId,
-        ensAddress: (network.ensAddress || standard.ensAddress || null),
-        _defaultProvider: defaultProvider
+        ensAddress: network.ensAddress || standard.ensAddress || null,
+        _defaultProvider: defaultProvider,
     };
 }

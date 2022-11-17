@@ -9,60 +9,78 @@ const logger = new Logger(version);
 ///////////////////////////////
 
 export enum UnicodeNormalizationForm {
-    current  = "",
-    NFC      = "NFC",
-    NFD      = "NFD",
-    NFKC     = "NFKC",
-    NFKD     = "NFKD"
-};
+    current = "",
+    NFC = "NFC",
+    NFD = "NFD",
+    NFKC = "NFKC",
+    NFKD = "NFKD",
+}
 
 export enum Utf8ErrorReason {
     // A continuation byte was present where there was nothing to continue
     // - offset = the index the codepoint began in
-    UNEXPECTED_CONTINUE   = "unexpected continuation byte",
+    UNEXPECTED_CONTINUE = "unexpected continuation byte",
 
     // An invalid (non-continuation) byte to start a UTF-8 codepoint was found
     // - offset = the index the codepoint began in
-    BAD_PREFIX            = "bad codepoint prefix",
+    BAD_PREFIX = "bad codepoint prefix",
 
     // The string is too short to process the expected codepoint
     // - offset = the index the codepoint began in
-    OVERRUN               = "string overrun",
+    OVERRUN = "string overrun",
 
     // A missing continuation byte was expected but not found
     // - offset = the index the continuation byte was expected at
-    MISSING_CONTINUE      = "missing continuation byte",
+    MISSING_CONTINUE = "missing continuation byte",
 
     // The computed code point is outside the range for UTF-8
     // - offset       = start of this codepoint
     // - badCodepoint = the computed codepoint; outside the UTF-8 range
-    OUT_OF_RANGE          = "out of UTF-8 range",
+    OUT_OF_RANGE = "out of UTF-8 range",
 
     // UTF-8 strings may not contain UTF-16 surrogate pairs
     // - offset       = start of this codepoint
     // - badCodepoint = the computed codepoint; inside the UTF-16 surrogate range
-    UTF16_SURROGATE       = "UTF-16 surrogate",
+    UTF16_SURROGATE = "UTF-16 surrogate",
 
     // The string is an overlong representation
     // - offset       = start of this codepoint
     // - badCodepoint = the computed codepoint; already bounds checked
-    OVERLONG              = "overlong representation",
-};
-
-
-export type Utf8ErrorFunc = (reason: Utf8ErrorReason, offset: number, bytes: ArrayLike<number>, output: Array<number>, badCodepoint?: number) => number;
-
-function errorFunc(reason: Utf8ErrorReason, offset: number, bytes: ArrayLike<number>, output: Array<number>, badCodepoint?: number): number {
-    return logger.throwArgumentError(`invalid codepoint at offset ${ offset }; ${ reason }`, "bytes", bytes);
+    OVERLONG = "overlong representation",
 }
 
-function ignoreFunc(reason: Utf8ErrorReason, offset: number, bytes: ArrayLike<number>, output: Array<number>, badCodepoint?: number): number {
+export type Utf8ErrorFunc = (
+    reason: Utf8ErrorReason,
+    offset: number,
+    bytes: ArrayLike<number>,
+    output: Array<number>,
+    badCodepoint?: number,
+) => number;
 
+function errorFunc(
+    reason: Utf8ErrorReason,
+    offset: number,
+    bytes: ArrayLike<number>,
+    output: Array<number>,
+    badCodepoint?: number,
+): number {
+    return logger.throwArgumentError(`invalid codepoint at offset ${offset}; ${reason}`, "bytes", bytes);
+}
+
+function ignoreFunc(
+    reason: Utf8ErrorReason,
+    offset: number,
+    bytes: ArrayLike<number>,
+    output: Array<number>,
+    badCodepoint?: number,
+): number {
     // If there is an invalid prefix (including stray continuation), skip any additional continuation bytes
     if (reason === Utf8ErrorReason.BAD_PREFIX || reason === Utf8ErrorReason.UNEXPECTED_CONTINUE) {
         let i = 0;
         for (let o = offset + 1; o < bytes.length; o++) {
-            if (bytes[o] >> 6 !== 0x02) { break; }
+            if (bytes[o] >> 6 !== 0x02) {
+                break;
+            }
             i++;
         }
         return i;
@@ -78,8 +96,13 @@ function ignoreFunc(reason: Utf8ErrorReason, offset: number, bytes: ArrayLike<nu
     return 0;
 }
 
-function replaceFunc(reason: Utf8ErrorReason, offset: number, bytes: ArrayLike<number>, output: Array<number>, badCodepoint?: number): number {
-
+function replaceFunc(
+    reason: Utf8ErrorReason,
+    offset: number,
+    bytes: ArrayLike<number>,
+    output: Array<number>,
+    badCodepoint?: number,
+): number {
     // Overlong representations are otherwise "valid" code points; just non-deistingtished
     if (reason === Utf8ErrorReason.OVERLONG) {
         output.push(badCodepoint);
@@ -94,15 +117,17 @@ function replaceFunc(reason: Utf8ErrorReason, offset: number, bytes: ArrayLike<n
 }
 
 // Common error handing strategies
-export const Utf8ErrorFuncs: { [ name: string ]: Utf8ErrorFunc } = Object.freeze({
+export const Utf8ErrorFuncs: { [name: string]: Utf8ErrorFunc } = Object.freeze({
     error: errorFunc,
     ignore: ignoreFunc,
-    replace: replaceFunc
+    replace: replaceFunc,
 });
 
 // http://stackoverflow.com/questions/13356493/decode-utf-8-with-javascript#13691499
 function getUtf8CodePoints(bytes: BytesLike, onError?: Utf8ErrorFunc): Array<number> {
-    if (onError == null) { onError = Utf8ErrorFuncs.error; }
+    if (onError == null) {
+        onError = Utf8ErrorFuncs.error;
+    }
 
     bytes = arrayify(bytes);
 
@@ -110,8 +135,7 @@ function getUtf8CodePoints(bytes: BytesLike, onError?: Utf8ErrorFunc): Array<num
     let i = 0;
 
     // Invalid bytes are ignored
-    while(i < bytes.length) {
-
+    while (i < bytes.length) {
         const c = bytes[i++];
 
         // 0xxx xxxx
@@ -129,16 +153,15 @@ function getUtf8CodePoints(bytes: BytesLike, onError?: Utf8ErrorFunc): Array<num
             extraLength = 1;
             overlongMask = 0x7f;
 
-        // 1110 xxxx 10xx xxxx 10xx xxxx
+            // 1110 xxxx 10xx xxxx 10xx xxxx
         } else if ((c & 0xf0) === 0xe0) {
             extraLength = 2;
             overlongMask = 0x7ff;
 
-        // 1111 0xxx 10xx xxxx 10xx xxxx 10xx xxxx
+            // 1111 0xxx 10xx xxxx 10xx xxxx 10xx xxxx
         } else if ((c & 0xf8) === 0xf0) {
             extraLength = 3;
             overlongMask = 0xffff;
-
         } else {
             if ((c & 0xc0) === 0x80) {
                 i += onError(Utf8ErrorReason.UNEXPECTED_CONTINUE, i - 1, bytes, result);
@@ -165,14 +188,16 @@ function getUtf8CodePoints(bytes: BytesLike, onError?: Utf8ErrorFunc): Array<num
                 i += onError(Utf8ErrorReason.MISSING_CONTINUE, i, bytes, result);
                 res = null;
                 break;
-            };
+            }
 
             res = (res << 6) | (nextChar & 0x3f);
             i++;
         }
 
         // See above loop for invalid continuation byte
-        if (res === null) { continue; }
+        if (res === null) {
+            continue;
+        }
 
         // Maximum code point
         if (res > 0x10ffff) {
@@ -199,8 +224,10 @@ function getUtf8CodePoints(bytes: BytesLike, onError?: Utf8ErrorFunc): Array<num
 }
 
 // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
-export function toUtf8Bytes(str: string, form: UnicodeNormalizationForm = UnicodeNormalizationForm.current): Uint8Array {
-
+export function toUtf8Bytes(
+    str: string,
+    form: UnicodeNormalizationForm = UnicodeNormalizationForm.current,
+): Uint8Array {
     if (form != UnicodeNormalizationForm.current) {
         logger.checkNormalize();
         str = str.normalize(form);
@@ -212,11 +239,9 @@ export function toUtf8Bytes(str: string, form: UnicodeNormalizationForm = Unicod
 
         if (c < 0x80) {
             result.push(c);
-
         } else if (c < 0x800) {
             result.push((c >> 6) | 0xc0);
             result.push((c & 0x3f) | 0x80);
-
         } else if ((c & 0xfc00) == 0xd800) {
             i++;
             const c2 = str.charCodeAt(i);
@@ -231,7 +256,6 @@ export function toUtf8Bytes(str: string, form: UnicodeNormalizationForm = Unicod
             result.push(((pair >> 12) & 0x3f) | 0x80);
             result.push(((pair >> 6) & 0x3f) | 0x80);
             result.push((pair & 0x3f) | 0x80);
-
         } else {
             result.push((c >> 12) | 0xe0);
             result.push(((c >> 6) & 0x3f) | 0x80);
@@ -240,56 +264,70 @@ export function toUtf8Bytes(str: string, form: UnicodeNormalizationForm = Unicod
     }
 
     return arrayify(result);
-};
+}
 
 function escapeChar(value: number) {
-    const hex = ("0000" + value.toString(16));
+    const hex = "0000" + value.toString(16);
     return "\\u" + hex.substring(hex.length - 4);
 }
 
 export function _toEscapedUtf8String(bytes: BytesLike, onError?: Utf8ErrorFunc): string {
-    return '"' + getUtf8CodePoints(bytes, onError).map((codePoint) => {
-        if (codePoint < 256) {
-            switch (codePoint) {
-                case 8:  return "\\b";
-                case 9:  return "\\t";
-                case 10: return "\\n"
-                case 13: return "\\r";
-                case 34: return "\\\"";
-                case 92: return "\\\\";
-            }
+    return (
+        '"' +
+        getUtf8CodePoints(bytes, onError)
+            .map((codePoint) => {
+                if (codePoint < 256) {
+                    switch (codePoint) {
+                        case 8:
+                            return "\\b";
+                        case 9:
+                            return "\\t";
+                        case 10:
+                            return "\\n";
+                        case 13:
+                            return "\\r";
+                        case 34:
+                            return '\\"';
+                        case 92:
+                            return "\\\\";
+                    }
 
-            if (codePoint >= 32 && codePoint < 127) {
-                return String.fromCharCode(codePoint);
-            }
-        }
+                    if (codePoint >= 32 && codePoint < 127) {
+                        return String.fromCharCode(codePoint);
+                    }
+                }
 
-        if (codePoint <= 0xffff) {
-            return escapeChar(codePoint);
-        }
+                if (codePoint <= 0xffff) {
+                    return escapeChar(codePoint);
+                }
 
-        codePoint -= 0x10000;
-        return escapeChar(((codePoint >> 10) & 0x3ff) + 0xd800) + escapeChar((codePoint & 0x3ff) + 0xdc00);
-    }).join("") + '"';
+                codePoint -= 0x10000;
+                return escapeChar(((codePoint >> 10) & 0x3ff) + 0xd800) + escapeChar((codePoint & 0x3ff) + 0xdc00);
+            })
+            .join("") +
+        '"'
+    );
 }
 
 export function _toUtf8String(codePoints: Array<number>): string {
-    return codePoints.map((codePoint) => {
-        if (codePoint <= 0xffff) {
-            return String.fromCharCode(codePoint);
-        }
-        codePoint -= 0x10000;
-        return String.fromCharCode(
-            (((codePoint >> 10) & 0x3ff) + 0xd800),
-            ((codePoint & 0x3ff) + 0xdc00)
-        );
-    }).join("");
+    return codePoints
+        .map((codePoint) => {
+            if (codePoint <= 0xffff) {
+                return String.fromCharCode(codePoint);
+            }
+            codePoint -= 0x10000;
+            return String.fromCharCode(((codePoint >> 10) & 0x3ff) + 0xd800, (codePoint & 0x3ff) + 0xdc00);
+        })
+        .join("");
 }
 
 export function toUtf8String(bytes: BytesLike, onError?: Utf8ErrorFunc): string {
     return _toUtf8String(getUtf8CodePoints(bytes, onError));
 }
 
-export function toUtf8CodePoints(str: string, form: UnicodeNormalizationForm = UnicodeNormalizationForm.current): Array<number> {
+export function toUtf8CodePoints(
+    str: string,
+    form: UnicodeNormalizationForm = UnicodeNormalizationForm.current,
+): Array<number> {
     return getUtf8CodePoints(toUtf8Bytes(str, form));
 }

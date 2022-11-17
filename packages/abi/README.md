@@ -1,5 +1,4 @@
-Ethereum ABI Coder
-==================
+# Ethereum ABI Coder
 
 This sub-module is part of the [ethers project](https://github.com/ethers-io/ethers.js).
 
@@ -8,15 +7,13 @@ used by most smart contracts to interoperate between other smart contracts and c
 
 For more information, see the [documentation](https://docs.ethers.io/v5/api/utils/abi/).
 
-Importing
----------
+## Importing
 
 Most users will prefer to use the [umbrella package](https://www.npmjs.com/package/ethers),
 but for those with more specific needs, individual components can be imported.
 
 ```javascript
 const {
-
     ConstructorFragment,
     EventFragment,
     Fragment,
@@ -41,12 +38,10 @@ const {
     checkResultErrors,
 
     LogDescription,
-    TransactionDescription
-
+    TransactionDescription,
 } = require("@ethersproject/abi");
 ```
 
-License
--------
+## License
 
 MIT License

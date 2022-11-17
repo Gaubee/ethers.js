@@ -3,7 +3,7 @@
 import http from "http";
 import https from "https";
 import { gunzipSync } from "zlib";
-import { parse } from "url"
+import { parse } from "url";
 
 import { arrayify, concat } from "@ethersproject/bytes";
 import { shallowCopy } from "@ethersproject/properties";
@@ -29,14 +29,16 @@ function getResponse(request: http.ClientRequest): Promise<GetUrlResponse> {
                     }
                     accum[name] = value;
                     return accum;
-                }, <{ [ name: string ]: string }>{ }),
-                body: null
+                }, <{ [name: string]: string }>{}),
+                body: null,
             };
             //resp.setEncoding("utf8");
 
             resp.on("data", (chunk: Uint8Array) => {
-                if (response.body == null) { response.body = new Uint8Array(0); }
-                response.body = concat([ response.body, chunk ]);
+                if (response.body == null) {
+                    response.body = new Uint8Array(0);
+                }
+                response.body = concat([response.body, chunk]);
             });
 
             resp.on("end", () => {
@@ -55,18 +57,24 @@ function getResponse(request: http.ClientRequest): Promise<GetUrlResponse> {
             });
         });
 
-        request.on("error", (error) => { reject(error); });
+        request.on("error", (error) => {
+            reject(error);
+        });
     });
 }
 
 // The URL.parse uses null instead of the empty string
 function nonnull(value: string): string {
-    if (value == null) { return ""; }
+    if (value == null) {
+        return "";
+    }
     return value;
 }
 
 export async function getUrl(href: string, options?: Options): Promise<GetUrlResponse> {
-    if (options == null) { options = { }; }
+    if (options == null) {
+        options = {};
+    }
 
     // @TODO: Once we drop support for node 8, we can pass the href
     //        directly into request and skip adding the components
@@ -77,10 +85,10 @@ export async function getUrl(href: string, options?: Options): Promise<GetUrlRes
         protocol: nonnull(url.protocol),
         hostname: nonnull(url.hostname),
         port: nonnull(url.port),
-        path: (nonnull(url.pathname) + nonnull(url.search)),
+        path: nonnull(url.pathname) + nonnull(url.search),
 
-        method: (options.method || "GET"),
-        headers: shallowCopy(options.headers || { }),
+        method: options.method || "GET",
+        headers: shallowCopy(options.headers || {}),
     };
 
     if (options.allowGzip) {
@@ -97,9 +105,9 @@ export async function getUrl(href: string, options?: Options): Promise<GetUrlRes
             break;
         default:
             /* istanbul ignore next */
-            logger.throwError(`unsupported protocol ${ url.protocol }`, Logger.errors.UNSUPPORTED_OPERATION, {
+            logger.throwError(`unsupported protocol ${url.protocol}`, Logger.errors.UNSUPPORTED_OPERATION, {
                 protocol: url.protocol,
-                operation: "request"
+                operation: "request",
             });
     }
 
@@ -111,4 +119,3 @@ export async function getUrl(href: string, options?: Options): Promise<GetUrlRes
     const response = await getResponse(req);
     return response;
 }
-

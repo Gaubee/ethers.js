@@ -9,7 +9,7 @@ import { langKo as ko } from "./lang-ko";
 import { langIt as it } from "./lang-it";
 import { langZhCn as zh_cn, langZhTw as zh_tw } from "./lang-zh";
 
-export const wordlists: { [ locale: string ]: Wordlist } = {
+export const wordlists: { [locale: string]: Wordlist } = {
     cz: cz,
     en: en,
     es: es,
@@ -19,7 +19,5 @@ export const wordlists: { [ locale: string ]: Wordlist } = {
     ko: ko,
     zh: zh_cn,
     zh_cn: zh_cn,
-    zh_tw: zh_tw
+    zh_tw: zh_tw,
 };
-
-

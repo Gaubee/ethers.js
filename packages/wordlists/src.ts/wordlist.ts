@@ -23,7 +23,7 @@ export abstract class Wordlist {
 
     // Subclasses may override this
     split(mnemonic: string): Array<string> {
-        return mnemonic.toLowerCase().split(/ +/g)
+        return mnemonic.toLowerCase().split(/ +/g);
     }
 
     // Subclasses may override this
@@ -36,27 +36,29 @@ export abstract class Wordlist {
         for (let i = 0; i < 2048; i++) {
             const word = wordlist.getWord(i);
             /* istanbul ignore if */
-            if (i !== wordlist.getWordIndex(word)) { return "0x"; }
+            if (i !== wordlist.getWordIndex(word)) {
+                return "0x";
+            }
             words.push(word);
         }
         return id(words.join("\n") + "\n");
     }
 
     static register(lang: Wordlist, name?: string): void {
-        if (!name) { name = lang.locale; }
+        if (!name) {
+            name = lang.locale;
+        }
 
         /* istanbul ignore if */
         if (exportWordlist) {
             try {
-                const anyGlobal = (window as any)
+                const anyGlobal = window as any;
                 if (anyGlobal._ethers && anyGlobal._ethers.wordlists) {
                     if (!anyGlobal._ethers.wordlists[name]) {
-                         defineReadOnly(anyGlobal._ethers.wordlists, name, lang);
+                        defineReadOnly(anyGlobal._ethers.wordlists, name, lang);
                     }
                 }
-            } catch (error) { }
+            } catch (error) {}
         }
     }
-
 }
-

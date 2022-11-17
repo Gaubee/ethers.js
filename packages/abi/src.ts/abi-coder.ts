@@ -22,10 +22,8 @@ import { TupleCoder } from "./coders/tuple";
 
 import { ParamType } from "./fragments";
 
-
 const paramTypeBytes = new RegExp(/^bytes([0-9]*)$/);
 const paramTypeNumber = new RegExp(/^(u?int)([0-9]*)$/);
-
 
 export type CoerceFunc = (type: string, value: any) => any;
 
@@ -37,7 +35,6 @@ export class AbiCoder {
     }
 
     _getCoder(param: ParamType): Coder {
-
         switch (param.baseType) {
             case "address":
                 return new AddressCoder(param.name);
@@ -50,9 +47,12 @@ export class AbiCoder {
             case "array":
                 return new ArrayCoder(this._getCoder(param.arrayChildren), param.arrayLength, param.name);
             case "tuple":
-                return new TupleCoder((param.components || []).map((component) => {
-                    return this._getCoder(component);
-                }), param.name);
+                return new TupleCoder(
+                    (param.components || []).map((component) => {
+                        return this._getCoder(component);
+                    }),
+                    param.name,
+                );
             case "":
                 return new NullCoder(param.name);
         }
@@ -61,10 +61,10 @@ export class AbiCoder {
         let match = param.type.match(paramTypeNumber);
         if (match) {
             let size = parseInt(match[2] || "256");
-            if (size === 0 || size > 256 || (size % 8) !== 0) {
+            if (size === 0 || size > 256 || size % 8 !== 0) {
                 logger.throwArgumentError("invalid " + match[1] + " bit length", "param", param);
             }
-            return new NumberCoder(size / 8, (match[1] === "int"), param.name);
+            return new NumberCoder(size / 8, match[1] === "int", param.name);
         }
 
         // bytes[0-9]+
@@ -80,7 +80,9 @@ export class AbiCoder {
         return logger.throwArgumentError("invalid type", "type", param.type);
     }
 
-    _getWordSize(): number { return 32; }
+    _getWordSize(): number {
+        return 32;
+    }
 
     _getReader(data: Uint8Array, allowLoose?: boolean): Reader {
         return new Reader(data, this._getWordSize(), this.coerceFunc, allowLoose);
@@ -100,12 +102,12 @@ export class AbiCoder {
         if (types.length !== values.length) {
             logger.throwError("types/values length mismatch", Logger.errors.INVALID_ARGUMENT, {
                 count: { types: types.length, values: values.length },
-                value: { types: types, values: values }
+                value: { types: types, values: values },
             });
         }
 
         const coders = types.map((type) => this._getCoder(ParamType.from(type)));
-        const coder = (new TupleCoder(coders, "_"));
+        const coder = new TupleCoder(coders, "_");
 
         const writer = this._getWriter();
         coder.encode(writer, values);
@@ -120,4 +122,3 @@ export class AbiCoder {
 }
 
 export const defaultAbiCoder: AbiCoder = new AbiCoder();
-

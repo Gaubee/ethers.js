@@ -18,25 +18,33 @@ import { parse as _parse, parser as _parser } from "./_parser";
 import { version } from "./_version";
 const logger = new ethers.utils.Logger(version);
 
-const Guard = { };
+const Guard = {};
 
 function hexConcat(values: Array<Opcode | ethers.utils.BytesLike>): string {
-    return ethers.utils.hexlify(ethers.utils.concat(values.map((v) => {
-        if (v instanceof Opcode) { return [ v.value ]; }
-        if (typeof(v) === "number") {
-            if (v >= 0 && v <= 255 && !(v % 1)) {
-                return ethers.utils.hexlify(v);
-            } else {
-                throw new Error("invalid number: " + v);
-            }
-        }
-        return v;
-    })));
+    return ethers.utils.hexlify(
+        ethers.utils.concat(
+            values.map((v) => {
+                if (v instanceof Opcode) {
+                    return [v.value];
+                }
+                if (typeof v === "number") {
+                    if (v >= 0 && v <= 255 && !(v % 1)) {
+                        return ethers.utils.hexlify(v);
+                    } else {
+                        throw new Error("invalid number: " + v);
+                    }
+                }
+                return v;
+            }),
+        ),
+    );
 }
 
 function repeat(char: string, length: number): string {
     let result = char;
-    while (result.length < length) { result += result; }
+    while (result.length < length) {
+        result += result;
+    }
     return result.substring(0, length);
 }
 
@@ -55,69 +63,77 @@ class Script {
     }
 
     _baseContext(callback: (name: string, context: any) => any): any {
-         return new Proxy({
-            __filename: this.filename,
-            __dirname: dirname(this.filename),
+        return new Proxy(
+            {
+                __filename: this.filename,
+                __dirname: dirname(this.filename),
 
-            console: console,
-            Uint8Array: Uint8Array,
+                console: console,
+                Uint8Array: Uint8Array,
 
-            ethers: ethers,
-            utils: ethers.utils,
+                ethers: ethers,
+                utils: ethers.utils,
 
-            BigNumber: ethers.BigNumber,
+                BigNumber: ethers.BigNumber,
 
-            arrayify: ethers.utils.arrayify,
-            concat: hexConcat,
-            hexlify: ethers.utils.hexlify,
-            zeroPad: function(value: ethers.utils.BytesLike, length: number) {
-                return ethers.utils.hexlify(ethers.utils.zeroPad(value, length));
+                arrayify: ethers.utils.arrayify,
+                concat: hexConcat,
+                hexlify: ethers.utils.hexlify,
+                zeroPad: function (value: ethers.utils.BytesLike, length: number) {
+                    return ethers.utils.hexlify(ethers.utils.zeroPad(value, length));
+                },
+
+                id: ethers.utils.id,
+                keccak256: ethers.utils.keccak256,
+                namehash: ethers.utils.namehash,
+                sha256: ethers.utils.sha256,
+
+                parseEther: ethers.utils.parseEther,
+                formatEther: ethers.utils.formatEther,
+                parseUnits: ethers.utils.parseUnits,
+                formatUnits: ethers.utils.formatUnits,
+
+                randomBytes: function (length: number): string {
+                    return ethers.utils.hexlify(ethers.utils.randomBytes(length));
+                },
+
+                toUtf8Bytes: ethers.utils.toUtf8Bytes,
+                toUtf8String: ethers.utils.toUtf8String,
+                formatBytes32String: ethers.utils.formatBytes32String,
+                parseBytes32String: ethers.utils.parseBytes32String,
+
+                Opcode: Opcode,
+
+                sighash: function (signature: string): string {
+                    return ethers.utils.id(ethers.utils.FunctionFragment.from(signature).format()).substring(0, 10);
+                },
+                topichash: function (signature: string): string {
+                    return ethers.utils.id(ethers.utils.EventFragment.from(signature).format());
+                },
+
+                assemble: assemble,
+                disassemble: disassemble,
+
+                Error: Error,
             },
-
-            id: ethers.utils.id,
-            keccak256: ethers.utils.keccak256,
-            namehash: ethers.utils.namehash,
-            sha256: ethers.utils.sha256,
-
-            parseEther: ethers.utils.parseEther,
-            formatEther: ethers.utils.formatEther,
-            parseUnits: ethers.utils.parseUnits,
-            formatUnits: ethers.utils.formatUnits,
-
-            randomBytes: function(length: number): string {
-                return ethers.utils.hexlify(ethers.utils.randomBytes(length));
+            {
+                get: (obj: any, key: string): any => {
+                    if (obj[key]) {
+                        return obj[key];
+                    }
+                    if (!callback) {
+                        return undefined;
+                    }
+                    return callback(key, this._context.context);
+                },
             },
-
-            toUtf8Bytes: ethers.utils.toUtf8Bytes,
-            toUtf8String: ethers.utils.toUtf8String,
-            formatBytes32String: ethers.utils.formatBytes32String,
-            parseBytes32String: ethers.utils.parseBytes32String,
-
-            Opcode: Opcode,
-
-            sighash: function(signature: string): string {
-               return ethers.utils.id(ethers.utils.FunctionFragment.from(signature).format()).substring(0, 10);
-            },
-            topichash: function(signature: string): string {
-               return ethers.utils.id(ethers.utils.EventFragment.from(signature).format());
-            },
-
-            assemble: assemble,
-            disassemble: disassemble,
-
-            Error: Error
-        }, {
-            get: (obj: any, key: string): any => {
-                if (obj[key]) { return obj[key]; }
-                if (!callback) { return undefined; }
-                return callback(key, this._context.context);
-            }
-        });
+        );
     }
 
-
     async evaluate(code: string, context?: any): Promise<string> {
-        if (this._context) { throw new Error("evaluation collision"); }
+        if (this._context) {
+            throw new Error("evaluation collision");
+        }
         this._context = { context: context };
 
         const script = new vm.Script(code, { filename: this.filename });
@@ -149,7 +165,7 @@ export type VisitFunc = (node: Node) => void;
 
 function throwError(message: string, location: Location): never {
     return logger.throwError(message, <any>"ASSEMBLER", {
-        location: location
+        location: location,
     });
 }
 
@@ -157,13 +173,15 @@ export abstract class Node {
     readonly tag: string;
     readonly location: Location;
 
-    constructor(guard: any, location: Location, options: { [ key: string ]: any }) {
-        if (guard !== Guard) { throwError("cannot instantiate class", location); }
+    constructor(guard: any, location: Location, options: { [key: string]: any }) {
+        if (guard !== Guard) {
+            throwError("cannot instantiate class", location);
+        }
         logger.checkAbstract(new.target, Node);
 
         ethers.utils.defineReadOnly(this, "location", Object.freeze(location));
 
-        ethers.utils.defineReadOnly(this, "tag", `node-${ nextTag++ }-${ this.constructor.name }`);
+        ethers.utils.defineReadOnly(this, "tag", `node-${nextTag++}-${this.constructor.name}`);
 
         for (const key in options) {
             ethers.utils.defineReadOnly<any, any>(this, key, options[key]);
@@ -179,7 +197,7 @@ export abstract class Node {
     }
 
     children(): Array<Node> {
-        return [ ];
+        return [];
     }
 
     visit(visit: VisitFunc): void {
@@ -190,7 +208,7 @@ export abstract class Node {
     }
 
     static from(options: any): Node {
-        const Factories: { [ type: string ]: { from: (options: any) => Node }} = {
+        const Factories: { [type: string]: { from: (options: any) => Node } } = {
             data: DataNode,
             decimal: LiteralNode,
             eval: EvaluationNode,
@@ -205,13 +223,15 @@ export abstract class Node {
         };
 
         const factory = Factories[options.type];
-        if (!factory) { throwError("unknown type: " + options.type, options.loc); }
+        if (!factory) {
+            throwError("unknown type: " + options.type, options.loc);
+        }
         return factory.from(options);
     }
 }
 
 export abstract class ValueNode extends Node {
-    constructor(guard: any, location: Location, options: { [ key: string ]: any }) {
+    constructor(guard: any, location: Location, options: { [key: string]: any }) {
         logger.checkAbstract(new.target, ValueNode);
         super(guard, location, options);
     }
@@ -227,10 +247,10 @@ export abstract class ValueNode extends Node {
         // Make sure it will fit into a push
         const length = ethers.utils.hexDataLength(hex);
         if (length === 0 || length > 32) {
-            throwError(`literal out of range: ${ hex }`, this.location);
+            throwError(`literal out of range: ${hex}`, this.location);
         }
 
-        return hexConcat([ Opcode.from("PUSH" + String(length)), hex ]);
+        return hexConcat([Opcode.from("PUSH" + String(length)), hex]);
     }
 }
 
@@ -257,7 +277,9 @@ export class LiteralNode extends ValueNode {
     }
 
     static from(options: any): LiteralNode {
-        if (options.type !== "hex" && options.type !== "decimal") { throwError("expected hex or decimal type", options.loc); }
+        if (options.type !== "hex" && options.type !== "decimal") {
+            throwError("expected hex or decimal type", options.loc);
+        }
         return new LiteralNode(Guard, options.loc, options.value, !!options.verbatim);
     }
 }
@@ -270,7 +292,9 @@ export class PopNode extends ValueNode {
     }
 
     get placeholder(): string {
-        if (this.index === 0) { return "$$"; }
+        if (this.index === 0) {
+            return "$$";
+        }
         return "$" + String(this.index);
     }
 
@@ -297,11 +321,11 @@ export class LinkNode extends ValueNode {
         const target = assembler.getTarget(this.label);
         if (target instanceof LabelNode) {
             if (this.type === "offset") {
-                value = (<number>(assembler.getLinkValue(target, this)));
+                value = <number>assembler.getLinkValue(target, this);
                 isOffset = true;
             }
         } else {
-            const result = (<DataSource>(assembler.getLinkValue(target, this)));
+            const result = <DataSource>assembler.getLinkValue(target, this);
 
             if (this.type === "offset") {
                 value = result.offset;
@@ -312,13 +336,13 @@ export class LinkNode extends ValueNode {
         }
 
         if (value == null) {
-             throwError("labels can only be targeted as offsets", this.location);
+            throwError("labels can only be targeted as offsets", this.location);
         }
 
         if (isOffset && assembler.positionIndependentCode) {
             const here = assembler.getOffset(this, this);
 
-            const opcodes = [ ];
+            const opcodes = [];
 
             if (here > value) {
                 // Jump backwards
@@ -326,7 +350,9 @@ export class LinkNode extends ValueNode {
                 // Find a literal with length the encodes its own length in the delta
                 let literal = "0x";
                 for (let w = 1; w <= 5; w++) {
-                    if (w > 4) { throwError("jump too large!", this.location); }
+                    if (w > 4) {
+                        throwError("jump too large!", this.location);
+                    }
                     literal = this.getPushLiteral(here - value + w);
                     if (ethers.utils.hexDataLength(literal) <= w) {
                         literal = ethers.utils.hexZeroPad(literal, w);
@@ -400,17 +426,23 @@ export class OpcodeNode extends ValueNode {
     }
 
     static from(options: any): OpcodeNode {
-        if (options.type !== "opcode") { throwError("expected opcode type", options.loc); }
+        if (options.type !== "opcode") {
+            throwError("expected opcode type", options.loc);
+        }
         const opcode = Opcode.from(options.mnemonic);
-        if (!opcode) { throwError("unknown opcode: " + options.mnemonic, options.loc); }
+        if (!opcode) {
+            throwError("unknown opcode: " + options.mnemonic, options.loc);
+        }
 
-        const operands = Object.freeze(options.operands.map((o: any) => {
-            const operand = Node.from(o);
-            if (!(operand instanceof ValueNode)) {
-                throwError("bad grammar?!", options.loc);
-            }
-            return operand;
-        }));
+        const operands = Object.freeze(
+            options.operands.map((o: any) => {
+                const operand = Node.from(o);
+                if (!(operand instanceof ValueNode)) {
+                    throwError("bad grammar?!", options.loc);
+                }
+                return operand;
+            }),
+        );
         return new OpcodeNode(Guard, options.loc, opcode, operands, !!options.bare);
     }
 }
@@ -418,9 +450,9 @@ export class OpcodeNode extends ValueNode {
 export abstract class LabelledNode extends Node {
     readonly name: string;
 
-    constructor(guard: any, location: Location, name: string, values?: { [ key: string ]: any }) {
+    constructor(guard: any, location: Location, name: string, values?: { [key: string]: any }) {
         logger.checkAbstract(new.target, LabelledNode);
-        values = ethers.utils.shallowCopy(values || { });
+        values = ethers.utils.shallowCopy(values || {});
         values.name = name;
         super(guard, location, values);
     }
@@ -434,7 +466,9 @@ export class LabelNode extends LabelledNode {
     }
 
     static from(options: any): LabelNode {
-        if (options.type !== "label") { throwError("expected label type", options.loc); }
+        if (options.type !== "label") {
+            throwError("expected label type", options.loc);
+        }
         return new LabelNode(Guard, options.loc, options.name);
     }
 }
@@ -443,7 +477,7 @@ export class PaddingNode extends ValueNode {
     _length: number;
 
     constructor(guard: any, location: Location) {
-        super(guard, location, { });
+        super(guard, location, {});
         this._length = 0;
     }
 
@@ -476,7 +510,7 @@ export class DataNode extends LabelledNode {
 
         // @TODO: This is a problem... We need to visit before visiting children
         // so offsets are correct, but then we cannot pad...
-        visit(this, "0x")
+        visit(this, "0x");
 
         for (let i = 0; i < this.data.length; i++) {
             await this.data[i].assemble(assembler, visit);
@@ -491,7 +525,9 @@ export class DataNode extends LabelledNode {
         let i = 0;
         while (i < bytecode.length) {
             const opcode = Opcode.from(bytecode[i++]);
-            if (opcode) { i += opcode.isPush(); }
+            if (opcode) {
+                i += opcode.isPush();
+            }
         }
 
         // The amount we overshot the data by is how much padding we need
@@ -509,8 +545,15 @@ export class DataNode extends LabelledNode {
     }
 
     static from(options: any): DataNode {
-        if (options.type !== "data") { throwError("expected data type", options.loc); }
-        return new DataNode(Guard, options.loc, options.name, Object.freeze(options.data.map((d: any) => Node.from(d))));
+        if (options.type !== "data") {
+            throwError("expected data type", options.loc);
+        }
+        return new DataNode(
+            Guard,
+            options.loc,
+            options.name,
+            Object.freeze(options.data.map((d: any) => Node.from(d))),
+        );
     }
 }
 
@@ -526,7 +569,7 @@ export class EvaluationNode extends ValueNode {
         assembler.start(this);
         const result: any = await assembler.evaluate(this.script, this);
         if (this.verbatim) {
-            if (typeof(result) === "number") {
+            if (typeof result === "number") {
                 visit(this, ethers.BigNumber.from(result).toHexString());
             } else {
                 visit(this, ethers.utils.hexlify(result));
@@ -538,7 +581,9 @@ export class EvaluationNode extends ValueNode {
     }
 
     static from(options: any): EvaluationNode {
-        if (options.type !== "eval") { throwError("expected eval type", options.loc); }
+        if (options.type !== "eval") {
+            throwError("expected eval type", options.loc);
+        }
         return new EvaluationNode(Guard, options.loc, options.script, !!options.verbatim);
     }
 }
@@ -557,7 +602,9 @@ export class ExecutionNode extends Node {
     }
 
     static from(options: any): ExecutionNode {
-        if (options.type !== "exec") { throwError("expected exec type", options.loc); }
+        if (options.type !== "exec") {
+            throwError("expected exec type", options.loc);
+        }
         return new ExecutionNode(Guard, options.loc, options.script);
     }
 }
@@ -583,8 +630,15 @@ export class ScopeNode extends LabelledNode {
     }
 
     static from(options: any): ScopeNode {
-        if (options.type !== "scope") { throwError("expected scope type", options.loc); }
-        return new ScopeNode(Guard, options.loc, options.name, Object.freeze(options.statements.map((s: any) => Node.from(s))));
+        if (options.type !== "scope") {
+            throwError("expected scope type", options.loc);
+        }
+        return new ScopeNode(
+            Guard,
+            options.loc,
+            options.name,
+            Object.freeze(options.statements.map((s: any) => Node.from(s))),
+        );
     }
 }
 
@@ -604,8 +658,8 @@ export interface Bytecode extends Array<Operation> {
 }
 
 export function disassemble(bytecode: string): Bytecode {
-    const ops: Array<Operation> = [ ];
-    const offsets: { [ offset: number ]: Operation } = { };
+    const ops: Array<Operation> = [];
+    const offsets: { [offset: number]: Operation } = {};
 
     const bytes = ethers.utils.arrayify(bytecode, { allowMissingPrefix: true });
 
@@ -614,7 +668,7 @@ export function disassemble(bytecode: string): Bytecode {
     while (i < bytes.length) {
         let opcode = Opcode.from(bytes[i]);
         if (!opcode) {
-            opcode = new Opcode(`unknown (${ ethers.utils.hexlify(bytes[i]) })`, bytes[i], 0, 0);
+            opcode = new Opcode(`unknown (${ethers.utils.hexlify(bytes[i])})`, bytes[i], 0, 0);
         } else if (oob && opcode.mnemonic === "JUMPDEST") {
             opcode = new Opcode(`JUMPDEST (invalid; OOB!!)`, bytes[i], 0, 0);
         }
@@ -622,7 +676,7 @@ export function disassemble(bytecode: string): Bytecode {
         const op: Operation = {
             opcode: opcode,
             offset: i,
-            length: 1
+            length: 1,
         };
         offsets[i] = op;
         ops.push(op);
@@ -642,25 +696,25 @@ export function disassemble(bytecode: string): Bytecode {
         }
     }
 
-    (<Bytecode>ops).getOperation = function(offset: number): Operation {
+    (<Bytecode>ops).getOperation = function (offset: number): Operation {
         if (offset >= bytes.length) {
             return {
                 opcode: Opcode.from("STOP"),
                 offset: offset,
-                length: 1
+                length: 1,
             };
         }
-        return (offsets[offset] || null);
+        return offsets[offset] || null;
     };
 
-    (<Bytecode>ops).getByte = function(offset: number): number {
+    (<Bytecode>ops).getByte = function (offset: number): number {
         if (offset >= bytes.length) {
             return 0x00;
         }
         return bytes[offset];
     };
 
-    (<Bytecode>ops).getBytes = function(offset: number, length: number): Uint8Array {
+    (<Bytecode>ops).getBytes = function (offset: number, length: number): Uint8Array {
         const result = new Uint8Array(length);
         result.fill(0);
         if (offset < bytes.length) {
@@ -671,11 +725,11 @@ export function disassemble(bytecode: string): Bytecode {
 
     (<Bytecode>ops).byteLength = bytes.length;
 
-    return (<Bytecode>ops);
+    return <Bytecode>ops;
 }
 
 export function formatBytecode(bytecode: Array<Operation>): string {
-    const lines: Array<string> = [ ];
+    const lines: Array<string> = [];
 
     bytecode.forEach((op) => {
         const opcode = op.opcode;
@@ -692,19 +746,17 @@ export function formatBytecode(bytecode: Array<Operation>): string {
         const push = opcode.isPush();
         if (push) {
             if (op.pushValue) {
-                operation = op.pushValue + `${ repeat(" ", 67 - op.pushValue.length) }; #${ push } `;
+                operation = op.pushValue + `${repeat(" ", 67 - op.pushValue.length)}; #${push} `;
             } else {
-                operation += `${ repeat(" ", 67 - operation.length) }; OOB!! `;
+                operation += `${repeat(" ", 67 - operation.length)}; OOB!! `;
             }
         }
 
-        lines.push(`${ offset.substring(2) }: ${ operation }`);
-
+        lines.push(`${offset.substring(2)}: ${operation}`);
     });
 
     return lines.join("\n");
 }
-
 
 export interface DataSource extends Array<number> {
     offset: number;
@@ -723,47 +775,46 @@ export type AssemblerOptions = {
     filename?: string;
     retry?: number;
     positionIndependentCode?: boolean;
-    defines?: { [ name: string ]: any };
+    defines?: { [name: string]: any };
     target?: string;
 };
 
 export type ParserOptions = {
     ignoreWarnings?: boolean;
-}
+};
 
 class Assembler {
     readonly root: Node;
     readonly positionIndependentCode: boolean;
 
-    readonly nodes: { [ tag: string ]: NodeState };
-    readonly labels: { [ name: string ]: LabelledNode };
+    readonly nodes: { [tag: string]: NodeState };
+    readonly labels: { [name: string]: LabelledNode };
 
-    _parents: { [ tag: string ]: Node };
+    _parents: { [tag: string]: Node };
 
     constructor(root: Node, positionIndependentCode?: boolean) {
         ethers.utils.defineReadOnly(this, "root", root);
         ethers.utils.defineReadOnly(this, "positionIndependentCode", !!positionIndependentCode);
 
-        const nodes: { [ tag: string ]: NodeState } = { };
-        const labels: { [ name: string ]: LabelledNode } = { };
-        const parents: { [ tag: string ]: Node } = { };
+        const nodes: { [tag: string]: NodeState } = {};
+        const labels: { [name: string]: LabelledNode } = {};
+        const parents: { [tag: string]: Node } = {};
 
         // Link labels to their target node
         root.visit((node) => {
             nodes[node.tag] = {
                 node: node,
                 offset: 0x0,
-                bytecode: "0x"
+                bytecode: "0x",
             };
 
             if (node instanceof LabelledNode) {
-
                 // Check for duplicate labels
                 if (labels[node.name]) {
                     logger.throwError(
-                        ("duplicate label: " + node.name),
+                        "duplicate label: " + node.name,
                         ethers.utils.Logger.errors.UNSUPPORTED_OPERATION,
-                        { }
+                        {},
                     );
                 }
 
@@ -777,9 +828,9 @@ class Assembler {
                 const target = labels[node.label];
                 if (!target) {
                     logger.throwError(
-                        ("missing label: " + node.label),
+                        "missing label: " + node.label,
                         ethers.utils.Logger.errors.UNSUPPORTED_OPERATION,
-                        { }
+                        {},
                     );
                 }
             }
@@ -803,24 +854,29 @@ class Assembler {
 
     // Evaluate script in the context of a {{! }} or {{= }}
     evaluate(script: string, source: Node): Promise<any> {
-         return Promise.resolve(new Uint8Array(0));
+        return Promise.resolve(new Uint8Array(0));
     }
 
-    getAncestor<T = Node>(node: Node, cls: { new(...args: any[]): T }): T {
+    getAncestor<T = Node>(node: Node, cls: { new (...args: any[]): T }): T {
         node = this._parents[node.tag];
         while (node) {
-            if (node instanceof cls) { return node; }
+            if (node instanceof cls) {
+                return node;
+            }
             node = this._parents[node.tag];
         }
         return null;
     }
 
     getOffset(node: Node, source?: Node): number {
-        const offset =  this.nodes[node.tag].offset;
+        const offset = this.nodes[node.tag].offset;
 
-        if (source == null) { return offset }
+        if (source == null) {
+            return offset;
+        }
 
-        const sourceScope: ScopeNode = ((source instanceof ScopeNode) ? source: this.getAncestor<ScopeNode>(source, ScopeNode));
+        const sourceScope: ScopeNode =
+            source instanceof ScopeNode ? source : this.getAncestor<ScopeNode>(source, ScopeNode);
         return offset - this.nodes[sourceScope.tag].offset;
     }
 
@@ -837,15 +893,16 @@ class Assembler {
     }
 
     getLinkValue(target: LabelledNode, source: Node): number | DataSource {
-        const sourceScope: ScopeNode = ((source instanceof ScopeNode) ? source: this.getAncestor<ScopeNode>(source, ScopeNode));
-        const targetScope: ScopeNode = ((target instanceof ScopeNode) ? target: this.getAncestor<ScopeNode>(target, ScopeNode));
+        const sourceScope: ScopeNode =
+            source instanceof ScopeNode ? source : this.getAncestor<ScopeNode>(source, ScopeNode);
+        const targetScope: ScopeNode =
+            target instanceof ScopeNode ? target : this.getAncestor<ScopeNode>(target, ScopeNode);
 
         if (target instanceof LabelNode) {
-
             // Label offset (e.g. "@foo:"); accessible only within its direct scope
             //const scope = this.getAncestor(source, Scope);
             if (targetScope !== sourceScope) {
-                throwError(`cannot access ${ target.name } from ${ source.tag }`, source.location);
+                throwError(`cannot access ${target.name} from ${source.tag}`, source.location);
             }
 
             // Return the offset relative to its scope
@@ -860,24 +917,28 @@ class Assembler {
         ethers.utils.defineReadOnly(bytes, "ast", target);
         ethers.utils.defineReadOnly(bytes, "source", target.location.source);
 
-        if (!((target instanceof DataNode) || (target instanceof ScopeNode))) {
+        if (!(target instanceof DataNode || target instanceof ScopeNode)) {
             throwError("invalid link value lookup", source.location);
         }
 
         // Check that target is any descendant (or self) of the source scope
-        let safeOffset = (sourceScope == targetScope);
+        let safeOffset = sourceScope == targetScope;
         if (!safeOffset) {
             sourceScope.visit((node) => {
-                if (node === targetScope) { safeOffset = true; }
+                if (node === targetScope) {
+                    safeOffset = true;
+                }
             });
         }
 
         // Not safe to access the offset; this will fault if anything tries.
         if (!safeOffset) {
             Object.defineProperty(bytes, "offset", {
-                get: function() { throwError(`cannot access ${ target.name }.offset from ${ source.tag }`, this.location); }
+                get: function () {
+                    throwError(`cannot access ${target.name}.offset from ${source.tag}`, this.location);
+                },
             });
-            ethers.utils.defineReadOnly(bytes, "_freeze", function() { });
+            ethers.utils.defineReadOnly(bytes, "_freeze", function () {});
         }
 
         // Add the offset relative to the scope; unless the offset has
@@ -885,24 +946,26 @@ class Assembler {
         if (safeOffset) {
             bytes.offset = info.offset - this.nodes[sourceScope.tag].offset;
             let frozen = false;
-            ethers.utils.defineReadOnly(bytes, "_freeze", function() {
-                 if (frozen) { return; }
-                 frozen = true;
-                 ethers.utils.defineReadOnly(bytes, "offset", bytes.offset);
+            ethers.utils.defineReadOnly(bytes, "_freeze", function () {
+                if (frozen) {
+                    return;
+                }
+                frozen = true;
+                ethers.utils.defineReadOnly(bytes, "offset", bytes.offset);
             });
         }
 
         return bytes;
     }
 
-    start(node: Node): void { }
-    end(node: Node): void { }
+    start(node: Node): void {}
+    end(node: Node): void {}
 }
 
 export enum SemanticErrorSeverity {
     error = "error",
-    warning = "warning"
-};
+    warning = "warning",
+}
 
 export type SemanticError = {
     readonly message: string;
@@ -921,7 +984,7 @@ export type SemanticError = {
 //  - An opcode is used as an operand but does not return a value
 class SemanticChecker extends Assembler {
     check(): Array<SemanticError> {
-        const errors: Array<SemanticError> = [ ];
+        const errors: Array<SemanticError> = [];
 
         this.root.visit((node) => {
             if (node instanceof OpcodeNode) {
@@ -929,9 +992,9 @@ class SemanticChecker extends Assembler {
                 if (node.instructional) {
                     if (opcode.delta) {
                         errors.push({
-                            message: `${ opcode.mnemonic } used as instructional`,
+                            message: `${opcode.mnemonic} used as instructional`,
                             severity: SemanticErrorSeverity.warning,
-                            node: node
+                            node: node,
                         });
                     }
                 } else {
@@ -940,14 +1003,14 @@ class SemanticChecker extends Assembler {
                             errors.push({
                                 message: "POP expects 0 operands",
                                 severity: SemanticErrorSeverity.error,
-                                node: node
+                                node: node,
                             });
                         }
                     } else if (node.operands.length !== opcode.delta) {
                         errors.push({
-                            message: `${ opcode.mnemonic } expects ${ opcode.delta } operands`,
+                            message: `${opcode.mnemonic} expects ${opcode.delta} operands`,
                             severity: SemanticErrorSeverity.error,
-                            node: node
+                            node: node,
                         });
                     }
                 }
@@ -959,16 +1022,15 @@ class SemanticChecker extends Assembler {
                     errors.push({
                         message: "PUSH opcode modifies program flow - use literals instead",
                         severity: SemanticErrorSeverity.warning,
-                        node: node
+                        node: node,
                     });
-
                 } else if (!node.location.statement && opcode.alpha !== 1) {
                     // If an opcode does not push anything on the stack, it
                     // cannot be used as an operand
                     errors.push({
-                        message: `${ node.opcode.mnemonic } cannot be an operand`,
+                        message: `${node.opcode.mnemonic} cannot be an operand`,
                         severity: SemanticErrorSeverity.error,
-                        node: node
+                        node: node,
                     });
                 }
             }
@@ -979,16 +1041,17 @@ class SemanticChecker extends Assembler {
                     errors.push({
                         message: `$$ must be an operand`,
                         severity: SemanticErrorSeverity.error,
-                        node: node
+                        node: node,
                     });
-
                 } else {
                     const scope = this.getAncestor(node, ScopeNode);
 
                     // Make sure any $$ is stack adjacent (within this scope)
-                    const ordered: Array<Node> = [ ];
+                    const ordered: Array<Node> = [];
                     node.visit((node) => {
-                        if (scope !== this.getAncestor(node, ScopeNode)) { return; }
+                        if (scope !== this.getAncestor(node, ScopeNode)) {
+                            return;
+                        }
                         ordered.push(node);
                     });
 
@@ -997,15 +1060,17 @@ class SemanticChecker extends Assembler {
                     let lastIndex = 0;
 
                     while (ordered.length && ordered[0] instanceof PopNode) {
-                        const popNode = (<PopNode>(ordered.shift()));
+                        const popNode = <PopNode>ordered.shift();
                         const index = popNode.index;
                         if (index === 0) {
                             foundZero = popNode;
                         } else if (index !== lastIndex + 1) {
                             errors.push({
-                                message: `out-of-order stack placeholder ${ popNode.placeholder }; expected $$${ lastIndex + 1 }`,
+                                message: `out-of-order stack placeholder ${popNode.placeholder}; expected $$${
+                                    lastIndex + 1
+                                }`,
                                 severity: SemanticErrorSeverity.error,
-                                node: popNode
+                                node: popNode,
                             });
                             while (ordered.length && ordered[0] instanceof PopNode) {
                                 ordered.shift();
@@ -1020,17 +1085,17 @@ class SemanticChecker extends Assembler {
                         errors.push({
                             message: "cannot mix $$ and $1 stack placeholder",
                             severity: SemanticErrorSeverity.error,
-                            node: foundZero
+                            node: foundZero,
                         });
                     }
 
                     // If there are still any buried, we have a problem
-                    const pops = ordered.filter((n) => (n instanceof PopNode));
+                    const pops = ordered.filter((n) => n instanceof PopNode);
                     if (pops.length) {
                         errors.push({
-                            message: `stack placeholder ${ (<PopNode>(pops[0])).placeholder } must be stack adjacent`,
+                            message: `stack placeholder ${(<PopNode>pops[0]).placeholder} must be stack adjacent`,
                             severity: SemanticErrorSeverity.error,
-                            node: pops[0]
+                            node: pops[0],
                         });
                     }
                 }
@@ -1045,13 +1110,13 @@ class CodeGenerationAssembler extends Assembler {
     readonly filename: string;
     readonly retry: number;
 
-    readonly defines: { [ name: string ]: any };
+    readonly defines: { [name: string]: any };
 
     readonly _stack: Array<Node>;
 
     //_oldBytecode: { [ tag: string ]: string };
-    _nextBytecode: { [ tag: string ]: string };
-    _objectCache: { [ tag: string ]: any };
+    _nextBytecode: { [tag: string]: string };
+    _objectCache: { [tag: string]: any };
 
     private _checks: Array<() => boolean>;
 
@@ -1062,11 +1127,11 @@ class CodeGenerationAssembler extends Assembler {
     constructor(root: Node, options: AssemblerOptions) {
         super(root, !!options.positionIndependentCode);
 
-        ethers.utils.defineReadOnly(this, "retry", ((options.retry != null) ? options.retry: 512));
+        ethers.utils.defineReadOnly(this, "retry", options.retry != null ? options.retry : 512);
         ethers.utils.defineReadOnly(this, "filename", resolve(options.filename || "./contract.asm"));
-        ethers.utils.defineReadOnly(this, "defines", Object.freeze(options.defines || { }));
+        ethers.utils.defineReadOnly(this, "defines", Object.freeze(options.defines || {}));
 
-        ethers.utils.defineReadOnly(this, "_stack", [ ]);
+        ethers.utils.defineReadOnly(this, "_stack", []);
 
         this.reset();
     }
@@ -1082,15 +1147,15 @@ class CodeGenerationAssembler extends Assembler {
     // Reset the assembler for another run with updated values
     reset(): void {
         this._changed = false;
-        this._objectCache = { };
+        this._objectCache = {};
 
-        this._nextBytecode = { };
+        this._nextBytecode = {};
 
         this._script = new Script(this.filename, (name: string, context: any) => {
             return this.get(name, context);
         });
 
-        this._checks = [ ];
+        this._checks = [];
     }
 
     evaluate(script: string, source: Node): Promise<any> {
@@ -1099,7 +1164,9 @@ class CodeGenerationAssembler extends Assembler {
 
     _runChecks(): void {
         this._checks.forEach((func) => {
-            if (!func()) { this._didChange(); }
+            if (!func()) {
+                this._didChange();
+            }
         });
     }
 
@@ -1111,13 +1178,13 @@ class CodeGenerationAssembler extends Assembler {
         // as possible; then we will try assembling again
         const result = super.getLinkValue(target, source);
 
-        if (typeof(result) === "number") {
+        if (typeof result === "number") {
             if (result < 0) {
                 this._checks.push(() => false);
                 return 0;
             }
             this._checks.push(() => {
-                return (super.getLinkValue(target, source) === result);
+                return super.getLinkValue(target, source) === result;
             });
             return result;
         }
@@ -1131,7 +1198,10 @@ class CodeGenerationAssembler extends Assembler {
             } else {
                 this._checks.push(() => {
                     const check = <DataSource>super.getLinkValue(target, source);
-                    if (check.offset === result.offset && ethers.utils.hexlify(check) === ethers.utils.hexlify(result)) {
+                    if (
+                        check.offset === result.offset &&
+                        ethers.utils.hexlify(check) === ethers.utils.hexlify(result)
+                    ) {
                         return true;
                     }
                     return false;
@@ -1140,7 +1210,7 @@ class CodeGenerationAssembler extends Assembler {
         } catch (error) {
             this._checks.push(() => {
                 const check = <DataSource>super.getLinkValue(target, source);
-                return (ethers.utils.hexlify(check) === ethers.utils.hexlify(result));
+                return ethers.utils.hexlify(check) === ethers.utils.hexlify(result);
             });
         }
 
@@ -1164,7 +1234,7 @@ class CodeGenerationAssembler extends Assembler {
 
         if (!(node instanceof PaddingNode)) {
             this._checks.push(() => {
-                return (oldBytecode === this.getBytecode(node));
+                return oldBytecode === this.getBytecode(node);
             });
         }
     }
@@ -1182,16 +1252,19 @@ class CodeGenerationAssembler extends Assembler {
         }
 
         const node = this.labels[name];
-        if (!node) { return undefined; }
+        if (!node) {
+            return undefined;
+        }
 
         // We cache objects when they are generated so all nodes
         // receive consistent data; if there is a change we will
         // run the entire assembly process again with the updated
         // values
         if (this._objectCache[node.tag] == null) {
-
             const result = this.getLinkValue(node, source);
-            if (typeof(result) !== "number" ) { result._freeze(); }
+            if (typeof result !== "number") {
+                result._freeze();
+            }
 
             this._objectCache[node.tag] = result;
         }
@@ -1203,7 +1276,6 @@ class CodeGenerationAssembler extends Assembler {
         let offset = 0;
 
         await this.root.assemble(this, (node, bytecode) => {
-
             // Things have moved; we will need to try again
             if (this.getOffset(node) !== offset) {
                 this.setOffset(node, offset);
@@ -1212,10 +1284,7 @@ class CodeGenerationAssembler extends Assembler {
             }
 
             this._stack.forEach((node) => {
-                this._nextBytecode[node.tag] = hexConcat([
-                    this._nextBytecode[node.tag],
-                    bytecode
-                ]);
+                this._nextBytecode[node.tag] = hexConcat([this._nextBytecode[node.tag], bytecode]);
             });
 
             offset += ethers.utils.hexDataLength(bytecode);
@@ -1225,27 +1294,27 @@ class CodeGenerationAssembler extends Assembler {
     }
 
     async assemble(label?: string): Promise<string> {
-        if (label == null) { label = "_"; }
+        if (label == null) {
+            label = "_";
+        }
         const target = this.getTarget(label);
 
         if (!target) {
-            logger.throwArgumentError(`unknown labelled target: ${ label }`, "label", label);
+            logger.throwArgumentError(`unknown labelled target: ${label}`, "label", label);
         } else if (!(target instanceof ScopeNode || target instanceof DataNode)) {
-            logger.throwArgumentError(`cannot assemble a bodyless label: ${ label }`, "label", label);
+            logger.throwArgumentError(`cannot assemble a bodyless label: ${label}`, "label", label);
         }
 
         // Continue re-evaluating the bytecode until a stable set of
         // offsets, length and values are reached.
         await this._assemble();
         for (let i = 0; i < this.retry; i++) {
-
             // Regenerate the code with the updated assembler values
             this.reset();
             await this._assemble();
 
             // Generated bytecode is stable!! :)
             if (!this.changed) {
-
                 // This should not happen; something is wrong with the grammar
                 // or missing enter/exit call in assemble
                 if (this._stack.length !== 0) {
@@ -1258,13 +1327,12 @@ class CodeGenerationAssembler extends Assembler {
         }
 
         return logger.throwError(
-            `unable to assemble; ${ this.retry } attempts failed to generate stable bytecode`,
+            `unable to assemble; ${this.retry} attempts failed to generate stable bytecode`,
             ethers.utils.Logger.errors.UNKNOWN_ERROR,
-            { }
+            {},
         );
     }
 }
-
 
 type _Location = {
     first_line: number;
@@ -1272,14 +1340,16 @@ type _Location = {
     first_column: number;
     last_column: number;
     statement: boolean;
-}
+};
 
 export function parse(code: string, options?: ParserOptions): Node {
-    if (options == null) { options = { }; }
+    if (options == null) {
+        options = {};
+    }
 
     // Since Jison allows \n, \r or \r\n line endings, we need some
     // tweaking to get the correct position
-    const lines: Array<{ line: string, offset: number }> = [ ];
+    const lines: Array<{ line: string; offset: number }> = [];
     let offset = 0;
     code.split(/(\r\n?|\n)/g).forEach((clump, index) => {
         if (index % 2) {
@@ -1297,15 +1367,16 @@ export function parse(code: string, options?: ParserOptions): Node {
     }
 
     // Givens a line (1 offset) and column (0 offset) return the byte offset
-    const getOffset = function(line: number, column: number): number {
+    const getOffset = function (line: number, column: number): number {
         const info = lines[line - 1];
-        if (!info || column >= info.line.length) { throw new Error("out of range"); }
+        if (!info || column >= info.line.length) {
+            throw new Error("out of range");
+        }
         return info.offset + column;
     };
 
     // We use this in the _parser to convert locations to source
-    _parser.yy._ethersLocation = function(loc?: _Location): Location {
-
+    _parser.yy._ethersLocation = function (loc?: _Location): Location {
         // The _ scope should call with null to get the full source
         if (loc == null) {
             return {
@@ -1313,7 +1384,7 @@ export function parse(code: string, options?: ParserOptions): Node {
                 line: 0,
                 length: code.length,
                 source: code,
-                statement: true
+                statement: true,
             };
         }
 
@@ -1322,9 +1393,9 @@ export function parse(code: string, options?: ParserOptions): Node {
         return {
             offset: offset,
             line: loc.first_line - 1,
-            length: (end - offset),
+            length: end - offset,
             source: code.substring(offset, end),
-            statement: (!!loc.statement)
+            statement: !!loc.statement,
         };
     };
 
@@ -1336,7 +1407,10 @@ export function parse(code: string, options?: ParserOptions): Node {
     // Semantic Checks
     const checker = new SemanticChecker(result);
     const errors = checker.check();
-    if (errors.filter((e) => (e.severity === SemanticErrorSeverity.error)).length || (errors.length && !options.ignoreWarnings)) {
+    if (
+        errors.filter((e) => e.severity === SemanticErrorSeverity.error).length ||
+        (errors.length && !options.ignoreWarnings)
+    ) {
         const error = new Error("semantic errors during parsing");
         (<any>error).errors = errors;
         throw error;
@@ -1346,6 +1420,6 @@ export function parse(code: string, options?: ParserOptions): Node {
 }
 
 export async function assemble(ast: Node, options?: AssemblerOptions): Promise<string> {
-    const assembler = new CodeGenerationAssembler(ast, options || { });
+    const assembler = new CodeGenerationAssembler(ast, options || {});
     return assembler.assemble(options.target || "_");
 }

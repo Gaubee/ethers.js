@@ -3,7 +3,7 @@
 const fs = require("fs");
 const { resolve } = require("path");
 
-const jison = require("jison")
+const jison = require("jison");
 
 const grammar = fs.readFileSync(resolve(__dirname, "grammar.jison")).toString();
 

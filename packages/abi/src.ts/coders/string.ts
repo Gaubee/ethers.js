@@ -6,7 +6,6 @@ import { Reader, Writer } from "./abstract-coder";
 import { DynamicBytesCoder } from "./bytes";
 
 export class StringCoder extends DynamicBytesCoder {
-
     constructor(localName: string) {
         super("string", localName);
     }

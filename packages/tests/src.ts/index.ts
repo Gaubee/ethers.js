@@ -11,4 +11,4 @@ import "./test-wordlists";
 
 import { LogFunc, Reporter, setLogFunc } from "./reporter";
 
-export { LogFunc, Reporter, setLogFunc }
+export { LogFunc, Reporter, setLogFunc };

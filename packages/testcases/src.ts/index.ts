@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 export { loadData, loadTests, saveTests } from "./disk-utils";
 
@@ -7,4 +7,3 @@ export { randomBytes, randomHexString, randomNumber };
 
 import * as TestCase from "./testcases";
 export { TestCase };
-

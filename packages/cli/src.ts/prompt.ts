@@ -10,7 +10,9 @@ export type PromptOptions = {
 
 function repeat(chr: string, count: number): string {
     let result = "";
-    while (result.length < count) { result += chr; }
+    while (result.length < count) {
+        result += chr;
+    }
     return result;
 }
 
@@ -21,17 +23,17 @@ function _getPrompt(prompt: string, options: PromptOptions, callback: (ctrlC: bo
     stdin.resume();
     stdin.setRawMode(true);
     stdin.resume();
-    stdin.setEncoding('utf8');
+    stdin.setEncoding("utf8");
 
-    let message = '';
+    let message = "";
 
     let respond = (ctrlC: boolean, message: string) => {
-        process.stdout.write('\n');
+        process.stdout.write("\n");
         stdin.setRawMode(false);
         stdin.pause();
-        stdin.removeListener('data', handler);
+        stdin.removeListener("data", handler);
         callback(ctrlC, message);
-    }
+    };
 
     function handler(chr: string): void {
         chr = String(chr);
@@ -54,8 +56,8 @@ function _getPrompt(prompt: string, options: PromptOptions, callback: (ctrlC: bo
             case "\u007f":
                 if (message.length > 0 && options.choice == null) {
                     message = message.substring(0, message.length - 1);
-                    (<any>(process.stdout)).clearLine();
-                    (<any>(process.stdout)).cursorTo(0);
+                    (<any>process.stdout).clearLine();
+                    (<any>process.stdout).cursorTo(0);
                     if (options.mask) {
                         process.stdout.write(prompt + repeat(options.mask, message.length));
                     } else {
@@ -66,7 +68,7 @@ function _getPrompt(prompt: string, options: PromptOptions, callback: (ctrlC: bo
 
             // Ctrl-C
             case "\u0003":
-                process.stdout.write('\n[ CTRL-C ]');
+                process.stdout.write("\n[ CTRL-C ]");
                 respond(true, null);
                 break;
 
@@ -80,7 +82,7 @@ function _getPrompt(prompt: string, options: PromptOptions, callback: (ctrlC: bo
                 } else {
                     // More password characters
                     if (options.mask) {
-                        process.stdout.write('*');
+                        process.stdout.write("*");
                     } else {
                         process.stdout.write(chr);
                     }
@@ -89,39 +91,40 @@ function _getPrompt(prompt: string, options: PromptOptions, callback: (ctrlC: bo
                 break;
         }
     }
-    stdin.on('data', handler);
+    stdin.on("data", handler);
 }
 
 function getPrompt(prompt: string, options: PromptOptions): Promise<string> {
     return new Promise((resolve, reject) => {
         _getPrompt(prompt, options, (ctrlC, password) => {
-             if (ctrlC) {
-                 return reject(new Error("cancelled"));
-             }
-             resolve(password);
+            if (ctrlC) {
+                return reject(new Error("cancelled"));
+            }
+            resolve(password);
         });
     });
 }
 
-
 export function getProgressBar(action: string): (percent: number) => void {
     let lastProgress = -1;
-    return function(percent: number): void {
+    return function (percent: number): void {
         let progress = Math.trunc(percent * 100);
-        if (progress == lastProgress) { return; }
+        if (progress == lastProgress) {
+            return;
+        }
         lastProgress = progress;
 
         process.stdin.setRawMode(false);
         process.stdin.pause();
 
-        (<any>(process.stdout)).clearLine();
-        (<any>(process.stdout)).cursorTo(0);
+        (<any>process.stdout).clearLine();
+        (<any>process.stdout).cursorTo(0);
         process.stdout.write(action + "... " + progress + "%");
 
         if (percent === 1) {
-            process.stdout.write('\n');
+            process.stdout.write("\n");
         }
-    }
+    };
 }
 
 export function getPassword(prompt: string): Promise<string> {
@@ -129,9 +132,8 @@ export function getPassword(prompt: string): Promise<string> {
 }
 
 export function getMessage(prompt: string): Promise<string> {
-    return getPrompt(prompt, { });
+    return getPrompt(prompt, {});
 }
-
 
 // @TODO: Allow choices to be an array, [ "Yes", "No", "All" ] => "(y)es/ (N)o/ (a)ll"
 export function getChoice(prompt: string, choices: string, defaultChoice?: string): Promise<string> {
@@ -139,7 +141,7 @@ export function getChoice(prompt: string, choices: string, defaultChoice?: strin
     if (defaultChoice) {
         defaultChoice = defaultChoice.toLowerCase();
     }
-    let options = { choice: choice, defaultChoice: defaultChoice }
-    let hint = choice.map((c) => ((c === defaultChoice) ? c.toUpperCase(): c)).join("/");
-    return getPrompt((prompt + " (" + hint + ") "), options);
+    let options = { choice: choice, defaultChoice: defaultChoice };
+    let hint = choice.map((c) => (c === defaultChoice ? c.toUpperCase() : c)).join("/");
+    return getPrompt(prompt + " (" + hint + ") ", options);
 }

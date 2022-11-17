@@ -11,7 +11,7 @@ import {
     Provider,
     TransactionReceipt,
     TransactionRequest,
-    TransactionResponse
+    TransactionResponse,
 } from "@ethersproject/abstract-provider";
 
 import { getNetwork } from "@ethersproject/networks";
@@ -35,7 +35,13 @@ import { Web3Provider } from "./web3-provider";
 import { WebSocketProvider } from "./websocket-provider";
 import { ExternalProvider, JsonRpcFetchFunc } from "./web3-provider";
 
-import { CommunityResourcable, Formatter, isCommunityResourcable, isCommunityResource, showThrottleMessage } from "./formatter";
+import {
+    CommunityResourcable,
+    Formatter,
+    isCommunityResourcable,
+    isCommunityResource,
+    showThrottleMessage,
+} from "./formatter";
 
 import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
@@ -45,19 +51,23 @@ const logger = new Logger(version);
 // Helper Functions
 
 function getDefaultProvider(network?: Networkish, options?: any): BaseProvider {
-    if (network == null) { network = "homestead"; }
+    if (network == null) {
+        network = "homestead";
+    }
 
     // If passed a URL, figure out the right type of provider based on the scheme
-    if (typeof(network) === "string") {
+    if (typeof network === "string") {
         // @TODO: Add support for IpcProvider; maybe if it ends in ".ipc"?
 
         // Handle http and ws (and their secure variants)
         const match = network.match(/^(ws|http)s?:/i);
         if (match) {
             switch (match[1].toLowerCase()) {
-                case "http": case "https":
+                case "http":
+                case "https":
                     return new JsonRpcProvider(network);
-                case "ws": case "wss":
+                case "ws":
+                case "wss":
                     return new WebSocketProvider(network);
                 default:
                     logger.throwArgumentError("unsupported URL scheme", "network", network);
@@ -69,45 +79,43 @@ function getDefaultProvider(network?: Networkish, options?: any): BaseProvider {
     if (!n || !n._defaultProvider) {
         logger.throwError("unsupported getDefaultProvider network", Logger.errors.NETWORK_ERROR, {
             operation: "getDefaultProvider",
-            network: network
+            network: network,
         });
     }
 
-    return n._defaultProvider({
-        FallbackProvider,
+    return n._defaultProvider(
+        {
+            FallbackProvider,
 
-        AlchemyProvider,
-        AnkrProvider,
-        CloudflareProvider,
-        EtherscanProvider,
-        InfuraProvider,
-        JsonRpcProvider,
-        NodesmithProvider,
-        PocketProvider,
-        Web3Provider,
+            AlchemyProvider,
+            AnkrProvider,
+            CloudflareProvider,
+            EtherscanProvider,
+            InfuraProvider,
+            JsonRpcProvider,
+            NodesmithProvider,
+            PocketProvider,
+            Web3Provider,
 
-        IpcProvider,
-    }, options);
+            IpcProvider,
+        },
+        options,
+    );
 }
 
 ////////////////////////
 // Exports
 
 export {
-
     // Abstract Providers (or Abstract-ish)
     Provider,
     BaseProvider,
-
     Resolver,
-
     UrlJsonRpcProvider,
 
     ///////////////////////
     // Concrete Providers
-
     FallbackProvider,
-
     AlchemyProvider,
     AlchemyWebSocketProvider,
     AnkrProvider,
@@ -122,35 +130,26 @@ export {
     StaticJsonRpcProvider,
     Web3Provider,
     WebSocketProvider,
-
     IpcProvider,
-
 
     ///////////////////////
     // Signer
-
     JsonRpcSigner,
-
 
     ///////////////////////
     // Functions
-
     getDefaultProvider,
     getNetwork,
     isCommunityResource,
     isCommunityResourcable,
     showThrottleMessage,
 
-
     ///////////////////////
     // Objects
-
     Formatter,
-
 
     ///////////////////////
     // Types
-
     Block,
     BlockTag,
     EventType,
@@ -161,18 +160,12 @@ export {
     TransactionReceipt,
     TransactionRequest,
     TransactionResponse,
-
     ExternalProvider,
     JsonRpcFetchFunc,
-
     FallbackProviderConfig,
-
     Network,
     Networkish,
-
     EnsProvider,
     EnsResolver,
-
-    CommunityResourcable
+    CommunityResourcable,
 };
-

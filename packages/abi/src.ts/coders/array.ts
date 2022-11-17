@@ -7,38 +7,48 @@ const logger = new Logger(version);
 import { Coder, Reader, Result, Writer } from "./abstract-coder";
 import { AnonymousCoder } from "./anonymous";
 
-export function pack(writer: Writer, coders: ReadonlyArray<Coder>, values: Array<any> | { [ name: string ]: any }): number {
+export function pack(
+    writer: Writer,
+    coders: ReadonlyArray<Coder>,
+    values: Array<any> | { [name: string]: any },
+): number {
     let arrayValues: Array<any> = null;
 
     if (Array.isArray(values)) {
-       arrayValues = values;
-
-    } else if (values && typeof(values) === "object") {
-        let unique: { [ name: string ]: boolean } = { };
+        arrayValues = values;
+    } else if (values && typeof values === "object") {
+        let unique: { [name: string]: boolean } = {};
 
         arrayValues = coders.map((coder) => {
             const name = coder.localName;
             if (!name) {
-                logger.throwError("cannot encode object for signature with missing names", Logger.errors.INVALID_ARGUMENT, {
-                    argument: "values",
-                    coder: coder,
-                    value: values
-                });
+                logger.throwError(
+                    "cannot encode object for signature with missing names",
+                    Logger.errors.INVALID_ARGUMENT,
+                    {
+                        argument: "values",
+                        coder: coder,
+                        value: values,
+                    },
+                );
             }
 
             if (unique[name]) {
-                logger.throwError("cannot encode object for signature with duplicate names", Logger.errors.INVALID_ARGUMENT, {
-                    argument: "values",
-                    coder: coder,
-                    value: values
-                });
+                logger.throwError(
+                    "cannot encode object for signature with duplicate names",
+                    Logger.errors.INVALID_ARGUMENT,
+                    {
+                        argument: "values",
+                        coder: coder,
+                        value: values,
+                    },
+                );
             }
 
             unique[name] = true;
 
             return values[name];
         });
-
     } else {
         logger.throwArgumentError("invalid tuple value", "tuple", values);
     }
@@ -66,14 +76,15 @@ export function pack(writer: Writer, coders: ReadonlyArray<Coder>, values: Array
             updateFuncs.push((baseOffset: number) => {
                 updateFunc(baseOffset + dynamicOffset);
             });
-
         } else {
             coder.encode(staticWriter, value);
         }
     });
 
     // Backfill all the dynamic offsets, now that we know the static length
-    updateFuncs.forEach((func) => { func(staticWriter.length); });
+    updateFuncs.forEach((func) => {
+        func(staticWriter.length);
+    });
 
     let length = writer.appendWriter(staticWriter);
     length += writer.appendWriter(dynamicWriter);
@@ -96,19 +107,22 @@ export function unpack(reader: Reader, coders: Array<Coder>): Result {
                 value = coder.decode(offsetReader);
             } catch (error) {
                 // Cannot recover from this
-                if (error.code === Logger.errors.BUFFER_OVERRUN) { throw error; }
+                if (error.code === Logger.errors.BUFFER_OVERRUN) {
+                    throw error;
+                }
                 value = error;
                 value.baseType = coder.name;
                 value.name = coder.localName;
                 value.type = coder.type;
             }
-
         } else {
             try {
                 value = coder.decode(reader);
             } catch (error) {
                 // Cannot recover from this
-                if (error.code === Logger.errors.BUFFER_OVERRUN) { throw error; }
+                if (error.code === Logger.errors.BUFFER_OVERRUN) {
+                    throw error;
+                }
                 value = error;
                 value.baseType = coder.name;
                 value.name = coder.localName;
@@ -125,27 +139,37 @@ export function unpack(reader: Reader, coders: Array<Coder>): Result {
     const uniqueNames = coders.reduce((accum, coder) => {
         const name = coder.localName;
         if (name) {
-            if (!accum[name]) { accum[name] = 0; }
+            if (!accum[name]) {
+                accum[name] = 0;
+            }
             accum[name]++;
         }
         return accum;
-    }, <{ [ name: string ]: number }>{ });
+    }, <{ [name: string]: number }>{});
 
     // Add any named parameters (i.e. tuples)
     coders.forEach((coder: Coder, index: number) => {
         let name = coder.localName;
-        if (!name || uniqueNames[name] !== 1) { return; }
+        if (!name || uniqueNames[name] !== 1) {
+            return;
+        }
 
-        if (name === "length") { name = "_length"; }
+        if (name === "length") {
+            name = "_length";
+        }
 
-        if (values[name] != null) { return; }
+        if (values[name] != null) {
+            return;
+        }
 
         const value = values[index];
 
         if (value instanceof Error) {
             Object.defineProperty(values, name, {
                 enumerable: true,
-                get: () => { throw value; }
+                get: () => {
+                    throw value;
+                },
             });
         } else {
             values[name] = value;
@@ -157,7 +181,9 @@ export function unpack(reader: Reader, coders: Array<Coder>): Result {
         if (value instanceof Error) {
             Object.defineProperty(values, i, {
                 enumerable: true,
-                get: () => { throw value; }
+                get: () => {
+                    throw value;
+                },
             });
         }
     }
@@ -165,14 +191,13 @@ export function unpack(reader: Reader, coders: Array<Coder>): Result {
     return Object.freeze(values);
 }
 
-
 export class ArrayCoder extends Coder {
     readonly coder: Coder;
     readonly length: number;
 
     constructor(coder: Coder, length: number, localName: string) {
-        const type = (coder.type + "[" + (length >= 0 ? length: "") + "]");
-        const dynamic = (length === -1 || coder.dynamic);
+        const type = coder.type + "[" + (length >= 0 ? length : "") + "]";
+        const dynamic = length === -1 || coder.dynamic;
         super("array", type, localName, dynamic);
 
         this.coder = coder;
@@ -202,10 +227,12 @@ export class ArrayCoder extends Coder {
             writer.writeValue(value.length);
         }
 
-        logger.checkArgumentCount(value.length, count, "coder array" + (this.localName? (" "+ this.localName): ""));
+        logger.checkArgumentCount(value.length, count, "coder array" + (this.localName ? " " + this.localName : ""));
 
         let coders = [];
-        for (let i = 0; i < value.length; i++) { coders.push(this.coder); }
+        for (let i = 0; i < value.length; i++) {
+            coders.push(this.coder);
+        }
 
         return pack(writer, coders, value);
     }
@@ -223,14 +250,15 @@ export class ArrayCoder extends Coder {
             if (count * 32 > reader._data.length) {
                 logger.throwError("insufficient data length", Logger.errors.BUFFER_OVERRUN, {
                     length: reader._data.length,
-                    count: count
+                    count: count,
                 });
             }
         }
         let coders = [];
-        for (let i = 0; i < count; i++) { coders.push(new AnonymousCoder(this.coder)); }
+        for (let i = 0; i < count; i++) {
+            coders.push(new AnonymousCoder(this.coder));
+        }
 
         return reader.coerce(this.name, unpack(reader, coders));
     }
 }
-

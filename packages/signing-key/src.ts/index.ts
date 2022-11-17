@@ -2,14 +2,23 @@
 
 import { EC } from "./elliptic";
 
-import { arrayify, BytesLike, hexDataLength, hexlify, hexZeroPad, Signature, SignatureLike, splitSignature } from "@ethersproject/bytes";
+import {
+    arrayify,
+    BytesLike,
+    hexDataLength,
+    hexlify,
+    hexZeroPad,
+    Signature,
+    SignatureLike,
+    splitSignature,
+} from "@ethersproject/bytes";
 import { defineReadOnly } from "@ethersproject/properties";
 
 import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
-let _curve: EC = null
+let _curve: EC = null;
 function getCurve() {
     if (!_curve) {
         _curve = new EC("secp256k1");
@@ -18,7 +27,6 @@ function getCurve() {
 }
 
 export class SigningKey {
-
     readonly curve: string;
 
     readonly privateKey: string;
@@ -46,8 +54,8 @@ export class SigningKey {
     }
 
     _addPoint(other: BytesLike): string {
-        const p0 =  getCurve().keyFromPublic(arrayify(this.publicKey));
-        const p1 =  getCurve().keyFromPublic(arrayify(other));
+        const p0 = getCurve().keyFromPublic(arrayify(this.publicKey));
+        const p1 = getCurve().keyFromPublic(arrayify(other));
         return "0x" + p0.pub.add(p1.pub).encodeCompressed("hex");
     }
 
@@ -62,7 +70,7 @@ export class SigningKey {
             recoveryParam: signature.recoveryParam,
             r: hexZeroPad("0x" + signature.r.toString(16), 32),
             s: hexZeroPad("0x" + signature.s.toString(16), 32),
-        })
+        });
     }
 
     computeSharedSecret(otherKey: BytesLike): string {
@@ -91,16 +99,17 @@ export function computePublicKey(key: BytesLike, compressed?: boolean): string {
             return "0x" + getCurve().keyFromPrivate(bytes).getPublic(true, "hex");
         }
         return signingKey.publicKey;
-
     } else if (bytes.length === 33) {
-        if (compressed) { return hexlify(bytes); }
+        if (compressed) {
+            return hexlify(bytes);
+        }
         return "0x" + getCurve().keyFromPublic(bytes).getPublic(false, "hex");
-
     } else if (bytes.length === 65) {
-        if (!compressed) { return hexlify(bytes); }
+        if (!compressed) {
+            return hexlify(bytes);
+        }
         return "0x" + getCurve().keyFromPublic(bytes).getPublic(true, "hex");
     }
 
     return logger.throwArgumentError("invalid public or private key", "key", "[REDACTED]");
 }
-

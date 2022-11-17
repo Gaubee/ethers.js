@@ -12,7 +12,7 @@ import * as constants from "@ethersproject/constants";
 import * as providers from "@ethersproject/providers";
 import { getDefaultProvider } from "@ethersproject/providers";
 
-import { Wordlist, wordlists} from "@ethersproject/wordlists";
+import { Wordlist, wordlists } from "@ethersproject/wordlists";
 
 import * as utils from "./utils";
 
@@ -25,7 +25,6 @@ import type { TypedDataDomain, TypedDataField } from "@ethersproject/abstract-si
 import { BigNumberish } from "@ethersproject/bignumber";
 import { Bytes, BytesLike, Signature } from "@ethersproject/bytes";
 import { Transaction, UnsignedTransaction } from "@ethersproject/transactions";
-
 
 ////////////////////////
 // Compile-Time Constants
@@ -42,85 +41,58 @@ import {
     ContractFunction,
     ContractReceipt,
     ContractTransaction,
-
     Event,
     EventFilter,
-
     Overrides,
     PayableOverrides,
     CallOverrides,
-
     PopulatedTransaction,
-
-    ContractInterface
+    ContractInterface,
 } from "@ethersproject/contracts";
-
 
 ////////////////////////
 // Exports
 
 export {
     Signer,
-
     Wallet,
     VoidSigner,
-
     getDefaultProvider,
     providers,
-
     BaseContract,
     Contract,
     ContractFactory,
-
     BigNumber,
     FixedNumber,
-
     constants,
     errors,
-
     logger,
-
     utils,
-
     wordlists,
-
 
     ////////////////////////
     // Compile-Time Constants
-
     version,
-
 
     ////////////////////////
     // Types
-
     ContractFunction,
     ContractReceipt,
     ContractTransaction,
     Event,
     EventFilter,
-
     Overrides,
     PayableOverrides,
     CallOverrides,
-
     PopulatedTransaction,
-
     ContractInterface,
-
     TypedDataDomain,
     TypedDataField,
-
     BigNumberish,
-
     Bytes,
     BytesLike,
-
     Signature,
-
     Transaction,
     UnsignedTransaction,
-
-    Wordlist
+    Wordlist,
 };
-

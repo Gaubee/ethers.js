@@ -20,7 +20,7 @@ function arrayifyInteger(value: number): Array<number> {
 function unarrayifyInteger(data: Uint8Array, offset: number, length: number): number {
     let result = 0;
     for (let i = 0; i < length; i++) {
-        result = (result * 256) + data[offset + i];
+        result = result * 256 + data[offset + i];
     }
     return result;
 }
@@ -28,12 +28,12 @@ function unarrayifyInteger(data: Uint8Array, offset: number, length: number): nu
 function _encode(object: Array<any> | string): Array<number> {
     if (Array.isArray(object)) {
         let payload: Array<number> = [];
-        object.forEach(function(child) {
+        object.forEach(function (child) {
             payload = payload.concat(_encode(child));
         });
 
         if (payload.length <= 55) {
-            payload.unshift(0xc0 + payload.length)
+            payload.unshift(0xc0 + payload.length);
             return payload;
         }
 
@@ -41,7 +41,6 @@ function _encode(object: Array<any> | string): Array<number> {
         length.unshift(0xf7 + length.length);
 
         return length.concat(payload);
-
     }
 
     if (!isBytesLike(object)) {
@@ -52,7 +51,6 @@ function _encode(object: Array<any> | string): Array<number> {
 
     if (data.length === 1 && data[0] <= 0x7f) {
         return data;
-
     } else if (data.length <= 55) {
         data.unshift(0x80 + data.length);
         return data;
@@ -83,63 +81,60 @@ function _decodeChildren(data: Uint8Array, offset: number, childOffset: number, 
 
         childOffset += decoded.consumed;
         if (childOffset > offset + 1 + length) {
-            logger.throwError("child data too short", Logger.errors.BUFFER_OVERRUN, { });
+            logger.throwError("child data too short", Logger.errors.BUFFER_OVERRUN, {});
         }
     }
 
-    return {consumed: (1 + length), result: result};
+    return { consumed: 1 + length, result: result };
 }
 
 // returns { consumed: number, result: Object }
-function _decode(data: Uint8Array, offset: number): { consumed: number, result: any } {
+function _decode(data: Uint8Array, offset: number): { consumed: number; result: any } {
     if (data.length === 0) {
-        logger.throwError("data too short", Logger.errors.BUFFER_OVERRUN, { });
+        logger.throwError("data too short", Logger.errors.BUFFER_OVERRUN, {});
     }
 
     // Array with extra length prefix
     if (data[offset] >= 0xf8) {
         const lengthLength = data[offset] - 0xf7;
         if (offset + 1 + lengthLength > data.length) {
-            logger.throwError("data short segment too short", Logger.errors.BUFFER_OVERRUN, { });
+            logger.throwError("data short segment too short", Logger.errors.BUFFER_OVERRUN, {});
         }
 
         const length = unarrayifyInteger(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger.throwError("data long segment too short", Logger.errors.BUFFER_OVERRUN, { });
+            logger.throwError("data long segment too short", Logger.errors.BUFFER_OVERRUN, {});
         }
 
         return _decodeChildren(data, offset, offset + 1 + lengthLength, lengthLength + length);
-
     } else if (data[offset] >= 0xc0) {
         const length = data[offset] - 0xc0;
         if (offset + 1 + length > data.length) {
-            logger.throwError("data array too short", Logger.errors.BUFFER_OVERRUN, { });
+            logger.throwError("data array too short", Logger.errors.BUFFER_OVERRUN, {});
         }
 
         return _decodeChildren(data, offset, offset + 1, length);
-
     } else if (data[offset] >= 0xb8) {
         const lengthLength = data[offset] - 0xb7;
         if (offset + 1 + lengthLength > data.length) {
-            logger.throwError("data array too short", Logger.errors.BUFFER_OVERRUN, { });
+            logger.throwError("data array too short", Logger.errors.BUFFER_OVERRUN, {});
         }
 
         const length = unarrayifyInteger(data, offset + 1, lengthLength);
         if (offset + 1 + lengthLength + length > data.length) {
-            logger.throwError("data array too short", Logger.errors.BUFFER_OVERRUN, { });
+            logger.throwError("data array too short", Logger.errors.BUFFER_OVERRUN, {});
         }
 
         const result = hexlify(data.slice(offset + 1 + lengthLength, offset + 1 + lengthLength + length));
-        return { consumed: (1 + lengthLength + length), result: result }
-
+        return { consumed: 1 + lengthLength + length, result: result };
     } else if (data[offset] >= 0x80) {
         const length = data[offset] - 0x80;
         if (offset + 1 + length > data.length) {
-            logger.throwError("data too short", Logger.errors.BUFFER_OVERRUN, { });
+            logger.throwError("data too short", Logger.errors.BUFFER_OVERRUN, {});
         }
 
         const result = hexlify(data.slice(offset + 1, offset + 1 + length));
-        return { consumed: (1 + length), result: result }
+        return { consumed: 1 + length, result: result };
     }
     return { consumed: 1, result: hexlify(data[offset]) };
 }
@@ -152,4 +147,3 @@ export function decode(data: BytesLike): any {
     }
     return decoded.result;
 }
-

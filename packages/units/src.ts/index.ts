@@ -7,23 +7,20 @@ import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
-const names = [
-    "wei",
-    "kwei",
-    "mwei",
-    "gwei",
-    "szabo",
-    "finney",
-    "ether",
-];
-
+const names = ["wei", "kwei", "mwei", "gwei", "szabo", "finney", "ether"];
 
 // Some environments have issues with RegEx that contain back-tracking, so we cannot
 // use them.
 export function commify(value: string | number): string {
     const comps = String(value).split(".");
 
-    if (comps.length > 2 || !comps[0].match(/^-?[0-9]*$/) || (comps[1] && !comps[1].match(/^[0-9]*$/)) || value === "." || value === "-.") {
+    if (
+        comps.length > 2 ||
+        !comps[0].match(/^-?[0-9]*$/) ||
+        (comps[1] && !comps[1].match(/^[0-9]*$/)) ||
+        value === "." ||
+        value === "-."
+    ) {
         logger.throwArgumentError("invalid value", "value", value);
     }
 
@@ -37,11 +34,17 @@ export function commify(value: string | number): string {
     }
 
     // Make sure we have at least 1 whole digit with no leading zeros
-    while (whole.substring(0, 1) === "0") { whole = whole.substring(1); }
-    if (whole === "") { whole = "0"; }
+    while (whole.substring(0, 1) === "0") {
+        whole = whole.substring(1);
+    }
+    if (whole === "") {
+        whole = "0";
+    }
 
     let suffix = "";
-    if (comps.length === 2) { suffix = "." + (comps[1] || "0"); }
+    if (comps.length === 2) {
+        suffix = "." + (comps[1] || "0");
+    }
     while (suffix.length > 2 && suffix[suffix.length - 1] === "0") {
         suffix = suffix.substring(0, suffix.length - 1);
     }
@@ -62,22 +65,26 @@ export function commify(value: string | number): string {
 }
 
 export function formatUnits(value: BigNumberish, unitName?: string | BigNumberish): string {
-    if (typeof(unitName) === "string") {
+    if (typeof unitName === "string") {
         const index = names.indexOf(unitName);
-        if (index !== -1) { unitName = 3 * index; }
+        if (index !== -1) {
+            unitName = 3 * index;
+        }
     }
-    return formatFixed(value, (unitName != null) ? unitName: 18);
+    return formatFixed(value, unitName != null ? unitName : 18);
 }
 
 export function parseUnits(value: string, unitName?: BigNumberish): BigNumber {
-    if (typeof(value) !== "string") {
+    if (typeof value !== "string") {
         logger.throwArgumentError("value must be a string", "value", value);
     }
-    if (typeof(unitName) === "string") {
+    if (typeof unitName === "string") {
         const index = names.indexOf(unitName);
-        if (index !== -1) { unitName = 3 * index; }
+        if (index !== -1) {
+            unitName = 3 * index;
+        }
     }
-    return parseFixed(value, (unitName != null) ? unitName: 18);
+    return parseFixed(value, unitName != null ? unitName : 18);
 }
 
 export function formatEther(wei: BigNumberish): string {
@@ -87,4 +94,3 @@ export function formatEther(wei: BigNumberish): string {
 export function parseEther(ether: string): BigNumber {
     return parseUnits(ether, 18);
 }
-

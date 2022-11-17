@@ -17,24 +17,35 @@ import { getPassword, getProgressBar } from "../prompt";
 import { compile, ContractCode, customRequire } from "../solc";
 
 function repeat(c: string, length: number): string {
-    if (c.length === 0) { throw new Error("too short"); }
+    if (c.length === 0) {
+        throw new Error("too short");
+    }
     let result = c;
-    while (result.length < length) { result += result; }
+    while (result.length < length) {
+        result += result;
+    }
     return result.substring(0, length);
 }
 
 function setupContext(path: string, context: any, plugin: Plugin) {
-
     context.provider = plugin.provider;
     context.accounts = plugin.accounts;
 
-    if (!context.__filename) { context.__filename = path; }
-    if (!context.__dirname) { context.__dirname = dirname(path); }
-    if (!context.console) { context.console = console; }
+    if (!context.__filename) {
+        context.__filename = path;
+    }
+    if (!context.__dirname) {
+        context.__dirname = dirname(path);
+    }
+    if (!context.console) {
+        context.console = console;
+    }
     if (!context.require) {
         context.require = customRequire(path);
     }
-    if (!context.process) { context.process = process; }
+    if (!context.process) {
+        context.process = process;
+    }
 
     context.ethers = ethers;
     context.version = ethers.version;
@@ -84,18 +95,19 @@ function setupContext(path: string, context: any, plugin: Plugin) {
     context.toUtf8String = ethers.utils.toUtf8String;
 }
 
-
 const cli = new CLI("sandbox");
 
 function prepareCode(code: string): string {
     let ast = babelParseExpression(code, {
-        createParenthesizedExpressions: true
+        createParenthesizedExpressions: true,
     });
 
     // Crawl the AST, to compute needed source code manipulations
-    const insert: Array<{ char: string, offset: number }> = [];
-    const descend = function(node: any) {
-        if (node == null || typeof(node) !== "object") { return; }
+    const insert: Array<{ char: string; offset: number }> = [];
+    const descend = function (node: any) {
+        if (node == null || typeof node !== "object") {
+            return;
+        }
         if (Array.isArray(node)) {
             return node.forEach(descend);
         }
@@ -108,12 +120,12 @@ function prepareCode(code: string): string {
         }
 
         Object.keys(node).forEach((key) => descend(key));
-    }
+    };
     descend(ast);
 
     // We make modifications from back to front, so we don't need
     // to adjust offsets
-    insert.sort((a, b) => (b.offset - a.offset));
+    insert.sort((a, b) => b.offset - a.offset);
 
     // Modify the code for REPL
     insert.forEach((mod) => {
@@ -127,8 +139,8 @@ class SandboxPlugin extends Plugin {
     static getHelp(): Help {
         return {
             name: "sandbox",
-            help: "Run a REPL VM environment with ethers"
-        }
+            help: "Run a REPL VM environment with ethers",
+        };
     }
 
     async prepareOptions(argParser: ArgParser): Promise<void> {
@@ -148,13 +160,18 @@ class SandboxPlugin extends Plugin {
     }
 
     run(): Promise<void> {
-        console.log(`version: ${ ethers.version }`);
-        console.log(`network: ${ this.network.name } (chainId: ${ this.network.chainId })`);
+        console.log(`version: ${ethers.version}`);
+        console.log(`network: ${this.network.name} (chainId: ${this.network.chainId})`);
 
         const filename = resolve(process.cwd(), "./sandbox.js");
-        const prompt = (this.provider ? this.network.name: "no-network") + "> ";
+        const prompt = (this.provider ? this.network.name : "no-network") + "> ";
 
-        const evaluate = function(code: string, context: any, file: any, _callback: (error: Error, result?: any) => void) {
+        const evaluate = function (
+            code: string,
+            context: any,
+            file: any,
+            _callback: (error: Error, result?: any) => void,
+        ) {
             // Pausing the stdin (which prompt does when it leaves), causes
             // readline to end us. So, we always re-enable stdin on a result
             const callback = (error: Error, result?: any) => {
@@ -167,11 +184,11 @@ class SandboxPlugin extends Plugin {
             } catch (error) {
                 if (error instanceof SyntaxError) {
                     const leftover = code.substring((<any>error).pos);
-                    const loc: { line: number, column: number } = (<any>error).loc;
+                    const loc: { line: number; column: number } = (<any>error).loc;
                     if (leftover.trim()) {
                         // After the first line, the prompt is "... "
-                        console.log(repeat("-", ((loc.line === 1) ? prompt.length: 4) + loc.column - 1) + "^");
-                        console.log(`Syntax Error! ${ error.message }`);
+                        console.log(repeat("-", (loc.line === 1 ? prompt.length : 4) + loc.column - 1) + "^");
+                        console.log(`Syntax Error! ${error.message}`);
                     } else {
                         error = new REPL.Recoverable(error);
                     }
@@ -181,15 +198,18 @@ class SandboxPlugin extends Plugin {
 
             try {
                 const result = vm.runInContext(code, context, {
-                     filename: filename
+                    filename: filename,
                 });
 
                 if (result instanceof Promise) {
-                    result.then((result) => {
-                        callback(null, result);
-                    }, (error) => {
-                        callback(error);
-                    });
+                    result.then(
+                        (result) => {
+                            callback(null, result);
+                        },
+                        (error) => {
+                            callback(error);
+                        },
+                    );
                 } else {
                     callback(null, result);
                 }
@@ -200,13 +220,13 @@ class SandboxPlugin extends Plugin {
 
         const repl = REPL.start({
             prompt: prompt,
-            eval: evaluate
+            eval: evaluate,
         });
 
         setupContext(filename, repl.context, this);
 
         return new Promise((resolve) => {
-            repl.on("exit", function() {
+            repl.on("exit", function () {
                 console.log("");
                 resolve(null);
             });
@@ -215,24 +235,23 @@ class SandboxPlugin extends Plugin {
 }
 cli.addPlugin("sandbox", SandboxPlugin);
 
-
 class InitPlugin extends Plugin {
     filename: string;
     force: boolean;
 
     static getHelp(): Help {
         return {
-           name: "init FILENAME",
-           help: "Create a new JSON wallet"
-        }
+            name: "init FILENAME",
+            help: "Create a new JSON wallet",
+        };
     }
 
     static getOptionHelp(): Array<Help> {
         return [
             {
                 name: "[ --force ]",
-                help: "Overwrite any existing files"
-            }
+                help: "Overwrite any existing files",
+            },
         ];
     }
 
@@ -242,7 +261,7 @@ class InitPlugin extends Plugin {
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
-        await super.prepareArgs(args)
+        await super.prepareArgs(args);
 
         if (args.length !== 1) {
             this.throwUsageError("init requires FILENAME");
@@ -253,12 +272,12 @@ class InitPlugin extends Plugin {
 
     async run(): Promise<void> {
         if (!this.force && fs.existsSync(this.filename)) {
-            this.throwError('File already exists (use --force to overwrite)');
+            this.throwError("File already exists (use --force to overwrite)");
         }
 
         console.log("Creating a new JSON Wallet - " + this.filename);
-        console.log('Keep this password and file SAFE!! If lost or forgotten');
-        console.log('it CANNOT be recovered, by ANYone, EVER.');
+        console.log("Keep this password and file SAFE!! If lost or forgotten");
+        console.log("it CANNOT be recovered, by ANYone, EVER.");
 
         let password = await getPassword("Choose a password: ");
         let confirm = await getPassword("Confirm password: ");
@@ -269,35 +288,34 @@ class InitPlugin extends Plugin {
         let wallet = ethers.Wallet.createRandom();
 
         let progressBar = await getProgressBar("Encrypting");
-        let json = await wallet.encrypt(password, { }, progressBar);
+        let json = await wallet.encrypt(password, {}, progressBar);
 
         try {
             if (this.force) {
                 fs.writeFileSync(this.filename, json);
             } else {
-                fs.writeFileSync(this.filename, json, { flag: 'wx' });
+                fs.writeFileSync(this.filename, json, { flag: "wx" });
             }
-            console.log('New account address: ' + wallet.address);
-            console.log('Saved:               ' + this.filename);
+            console.log("New account address: " + wallet.address);
+            console.log("Saved:               " + this.filename);
         } catch (error) {
-            if (error.code === 'EEXIST') {
-                this.throwError('File already exists (use --force to overwrite)');
+            if (error.code === "EEXIST") {
+                this.throwError("File already exists (use --force to overwrite)");
             }
-            this.throwError('Unknown Error: ' + error.message);
+            this.throwError("Unknown Error: " + error.message);
         }
     }
 }
 cli.addPlugin("init", InitPlugin);
-
 
 class FundPlugin extends Plugin {
     toAddress: string;
 
     static getHelp(): Help {
         return {
-           name: "fund TARGET",
-           help: "Fund TARGET with testnet ether"
-        }
+            name: "fund TARGET",
+            help: "Fund TARGET with testnet ether",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -325,22 +343,21 @@ class FundPlugin extends Plugin {
 }
 cli.addPlugin("fund", FundPlugin);
 
-
 class InfoPlugin extends Plugin {
     queries: Array<string>;
     addresses: Array<string>;
 
     static getHelp(): Help {
         return {
-           name: "info [ TARGET ... ]",
-           help: "Dump info for accounts, addresses and ENS names"
-        }
+            name: "info [ TARGET ... ]",
+            help: "Dump info for accounts, addresses and ENS names",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
         await super.prepareArgs(args);
 
-        this.queries = [ ];
+        this.queries = [];
         let runners: Array<Promise<string>> = [];
 
         this.accounts.forEach((account, index) => {
@@ -355,7 +372,7 @@ class InfoPlugin extends Plugin {
                 this.queries.push(`ENS Name: ${arg}`);
             }
             runners.push(this.provider.resolveName(arg));
-        })
+        });
 
         this.addresses = await Promise.all(runners);
     }
@@ -367,14 +384,14 @@ class InfoPlugin extends Plugin {
                 balance: this.provider.getBalance(address),
                 nonce: this.provider.getTransactionCount(address),
                 code: this.provider.getCode(address),
-                reverse: this.provider.lookupAddress(address)
+                reverse: this.provider.lookupAddress(address),
             });
 
             let info: any = {
-                "Address": address,
-                "Balance": (ethers.utils.formatEther(balance) + " ether"),
-                "Transaction Count": nonce
-            }
+                Address: address,
+                Balance: ethers.utils.formatEther(balance) + " ether",
+                "Transaction Count": nonce,
+            };
 
             if (code != "0x") {
                 info["Code"] = code;
@@ -390,7 +407,6 @@ class InfoPlugin extends Plugin {
 }
 cli.addPlugin("info", InfoPlugin);
 
-
 class SendPlugin extends Plugin {
     toAddress: string;
     value: ethers.BigNumber;
@@ -399,21 +415,21 @@ class SendPlugin extends Plugin {
 
     static getHelp(): Help {
         return {
-           name: "send TARGET ETHER",
-           help: "Send ETHER ether to TARGET form accounts[0]"
-        }
+            name: "send TARGET ETHER",
+            help: "Send ETHER ether to TARGET form accounts[0]",
+        };
     }
 
     static getOptionHelp(): Array<Help> {
         return [
             {
                 name: "[ --allow-zero ]",
-                help: "Allow sending to the address zero"
+                help: "Allow sending to the address zero",
             },
             {
                 name: "[ --data DATA ]",
-                help: "Include data in the transaction"
-            }
+                help: "Include data in the transaction",
+            },
         ];
     }
 
@@ -435,7 +451,11 @@ class SendPlugin extends Plugin {
             this.throwUsageError("send requires exactly ADDRESS and AMOUNT");
         }
 
-        this.toAddress = await this.getAddress(args[0], "Cannot send to the zero address (use --allow-zero to override)", this.allowZero);
+        this.toAddress = await this.getAddress(
+            args[0],
+            "Cannot send to the zero address (use --allow-zero to override)",
+            this.allowZero,
+        );
         this.value = ethers.utils.parseEther(args[1]);
     }
 
@@ -443,21 +463,20 @@ class SendPlugin extends Plugin {
         await this.accounts[0].sendTransaction({
             to: this.toAddress,
             data: this.data,
-            value: this.value
-        });;
+            value: this.value,
+        });
     }
 }
 cli.addPlugin("send", SendPlugin);
-
 
 class SweepPlugin extends Plugin {
     toAddress: string;
 
     static getHelp(): Help {
         return {
-           name: "sweep TARGET",
-           help: "Send all ether from accounts[0] to TARGET"
-        }
+            name: "sweep TARGET",
+            help: "Send all ether from accounts[0] to TARGET",
+        };
     }
 
     async prepareOptions(argParser: ArgParser): Promise<void> {
@@ -475,15 +494,14 @@ class SweepPlugin extends Plugin {
             this.throwUsageError("sweep requires exactly ADDRESS");
         }
 
-        this.toAddress = await this.getAddress(args[0]);;
+        this.toAddress = await this.getAddress(args[0]);
     }
 
     async run(): Promise<void> {
-
         let { balance, gasPrice, code } = await ethers.utils.resolveProperties({
             balance: this.provider.getBalance(this.accounts[0].getAddress()),
-            gasPrice: (this.gasPrice || this.provider.getGasPrice()),
-            code: this.provider.getCode(this.toAddress)
+            gasPrice: this.gasPrice || this.provider.getGasPrice(),
+            code: this.provider.getCode(this.toAddress),
         });
 
         if (code !== "0x") {
@@ -499,12 +517,11 @@ class SweepPlugin extends Plugin {
             to: this.toAddress,
             gasLimit: 21000,
             gasPrice: gasPrice,
-            value: maxSpendable
+            value: maxSpendable,
         });
     }
 }
 cli.addPlugin("sweep", SweepPlugin);
-
 
 class SignMessagePlugin extends Plugin {
     message: string;
@@ -512,17 +529,17 @@ class SignMessagePlugin extends Plugin {
 
     static getHelp(): Help {
         return {
-           name: "sign-message MESSAGE",
-           help: "Sign a MESSAGE with accounts[0]"
-        }
+            name: "sign-message MESSAGE",
+            help: "Sign a MESSAGE with accounts[0]",
+        };
     }
 
     static getOptionHelp(): Array<Help> {
         return [
             {
                 name: "[ --hex ]",
-                help: "The message content is hex encoded"
-            }
+                help: "The message content is hex encoded",
+            },
         ];
     }
 
@@ -550,15 +567,14 @@ class SignMessagePlugin extends Plugin {
 }
 cli.addPlugin("sign-message", SignMessagePlugin);
 
-
 class EvalPlugin extends Plugin {
     code: string;
 
     static getHelp(): Help {
         return {
-           name: "eval CODE",
-           help: "Run CODE in a VM with ethers"
-        }
+            name: "eval CODE",
+            help: "Run CODE in a VM with ethers",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -572,7 +588,7 @@ class EvalPlugin extends Plugin {
     }
 
     async run(): Promise<void> {
-        let contextObject = { };
+        let contextObject = {};
         setupContext(resolve(process.cwd(), "./sandbox.js"), contextObject, this);
 
         let context = vm.createContext(contextObject);
@@ -588,15 +604,14 @@ class EvalPlugin extends Plugin {
 }
 cli.addPlugin("eval", EvalPlugin);
 
-
 class RunPlugin extends Plugin {
     filename: string;
 
     static getHelp(): Help {
         return {
-           name: "run FILENAME",
-           help: "Run FILENAME in a VM with ethers"
-        }
+            name: "run FILENAME",
+            help: "Run FILENAME in a VM with ethers",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -610,7 +625,7 @@ class RunPlugin extends Plugin {
     }
 
     async run(): Promise<void> {
-        let contextObject = { };
+        let contextObject = {};
         setupContext(resolve(this.filename), contextObject, this);
 
         let context = vm.createContext(contextObject);
@@ -626,15 +641,14 @@ class RunPlugin extends Plugin {
 }
 cli.addPlugin("run", RunPlugin);
 
-
 class WaitPlugin extends Plugin {
     hash: string;
 
     static getHelp(): Help {
         return {
-           name: "wait HASH",
-           help: "Wait for a transaction HASH to be mined"
-        }
+            name: "wait HASH",
+            help: "Wait for a transaction HASH to be mined",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -652,28 +666,25 @@ class WaitPlugin extends Plugin {
 
         let receipt = await this.provider.waitForTransaction(this.hash);
         dump("Response:", {
-            "Block": receipt.blockNumber,
+            Block: receipt.blockNumber,
             "Block Hash": receipt.blockHash,
-            "Status": (receipt.status ? "ok": "failed")
+            Status: receipt.status ? "ok" : "failed",
         });
     }
 }
 cli.addPlugin("wait", WaitPlugin);
 
 const WethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-const WethAbi = [
-    "function deposit() payable",
-    "function withdraw(uint wad)"
-];
+const WethAbi = ["function deposit() payable", "function withdraw(uint wad)"];
 
 class WrapEtherPlugin extends Plugin {
     value: ethers.BigNumber;
 
     static getHelp(): Help {
         return {
-           name: "wrap-ether VALUE",
-           help: "Deposit VALUE into Wrapped Ether (WETH)"
-        }
+            name: "wrap-ether VALUE",
+            help: "Deposit VALUE into Wrapped Ether (WETH)",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -701,8 +712,8 @@ class WrapEtherPlugin extends Plugin {
         let address = await this.accounts[0].getAddress();
 
         this.dump("Wrapping ether", {
-            "From": address,
-            "Value": ethers.utils.formatEther(this.value)
+            From: address,
+            Value: ethers.utils.formatEther(this.value),
         });
 
         let contract = new ethers.Contract(WethAddress, WethAbi, this.accounts[0]);
@@ -716,9 +727,9 @@ class UnwrapEtherPlugin extends Plugin {
 
     static getHelp(): Help {
         return {
-           name: "unwrap-ether VALUE",
-           help: "Withdraw VALUE from Wrapped Ether (WETH)"
-        }
+            name: "unwrap-ether VALUE",
+            help: "Withdraw VALUE from Wrapped Ether (WETH)",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -740,8 +751,8 @@ class UnwrapEtherPlugin extends Plugin {
 
         let address = await this.accounts[0].getAddress();
         this.dump("Withdrawing Wrapped Ether", {
-            "To": address,
-            "Value": ethers.utils.formatEther(this.value)
+            To: address,
+            Value: ethers.utils.formatEther(this.value),
         });
 
         let contract = new ethers.Contract(WethAddress, WethAbi, this.accounts[0]);
@@ -755,13 +766,10 @@ const Erc20Abi = [
     "function symbol() view returns (string)",
     "function name() view returns (string)",
     "function balanceOf(address) view returns (uint)",
-    "function transfer(address to, uint256 value)"
+    "function transfer(address to, uint256 value)",
 ];
 
-const Erc20AltAbi = [
-    "function symbol() view returns (bytes32)",
-    "function name() view returns (bytes32)",
-];
+const Erc20AltAbi = ["function symbol() view returns (bytes32)", "function name() view returns (bytes32)"];
 
 class SendTokenPlugin extends Plugin {
     contract: ethers.Contract;
@@ -771,9 +779,9 @@ class SendTokenPlugin extends Plugin {
 
     static getHelp(): Help {
         return {
-           name: "send-token TOKEN ADDRESS VALUE",
-           help: "Send VALUE tokens (at TOKEN) to ADDRESS"
-        }
+            name: "send-token TOKEN ADDRESS VALUE",
+            help: "Send VALUE tokens (at TOKEN) to ADDRESS",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -797,35 +805,51 @@ class SendTokenPlugin extends Plugin {
     }
 
     async run(): Promise<void> {
-        const info: { [ name: string ]: any } = {
-            "To": this.toAddress,
+        const info: { [name: string]: any } = {
+            To: this.toAddress,
             "Token Contract": this.contract.address,
-            "Value": ethers.utils.formatUnits(this.value, this.decimals)
+            Value: ethers.utils.formatUnits(this.value, this.decimals),
         };
 
-        let namePromise = this.contract.name().then((name: string) => {
-            if (name === "") { throw new Error("returned zero"); }
-            info["Token Name"] = name;
-        }, (error: Error) => {
-            let contract = new ethers.Contract(this.contract.address, Erc20AltAbi, this.contract.signer);
-            contract.name().then((name: string) => {
-                info["Token Name"] = ethers.utils.parseBytes32String(name);
-            }, (error: Error) => {
-                throw error;
-            });
-        });
+        let namePromise = this.contract.name().then(
+            (name: string) => {
+                if (name === "") {
+                    throw new Error("returned zero");
+                }
+                info["Token Name"] = name;
+            },
+            (error: Error) => {
+                let contract = new ethers.Contract(this.contract.address, Erc20AltAbi, this.contract.signer);
+                contract.name().then(
+                    (name: string) => {
+                        info["Token Name"] = ethers.utils.parseBytes32String(name);
+                    },
+                    (error: Error) => {
+                        throw error;
+                    },
+                );
+            },
+        );
 
-        let symbolPromise = this.contract.symbol().then((symbol: string) => {
-            if (symbol === "") { throw new Error("returned zero"); }
-            info["Token Symbol"] = symbol;
-        }, (error: Error) => {
-            let contract = new ethers.Contract(this.contract.address, Erc20AltAbi, this.contract.signer);
-            contract.symbol().then((symbol: string) => {
-                info["Token Symbol"] = ethers.utils.parseBytes32String(symbol);
-            }, (error: Error) => {
-                throw error;
-            });
-        });
+        let symbolPromise = this.contract.symbol().then(
+            (symbol: string) => {
+                if (symbol === "") {
+                    throw new Error("returned zero");
+                }
+                info["Token Symbol"] = symbol;
+            },
+            (error: Error) => {
+                let contract = new ethers.Contract(this.contract.address, Erc20AltAbi, this.contract.signer);
+                contract.symbol().then(
+                    (symbol: string) => {
+                        info["Token Symbol"] = ethers.utils.parseBytes32String(symbol);
+                    },
+                    (error: Error) => {
+                        throw error;
+                    },
+                );
+            },
+        );
 
         await namePromise;
         await symbolPromise;
@@ -837,7 +861,6 @@ class SendTokenPlugin extends Plugin {
 }
 cli.addPlugin("send-token", SendTokenPlugin);
 
-
 class CompilePlugin extends Plugin {
     filename: string;
     noOptimize: boolean;
@@ -845,21 +868,21 @@ class CompilePlugin extends Plugin {
 
     static getHelp(): Help {
         return {
-           name: "compile FILENAME",
-           help: "Compiles a Solidity contract"
-        }
+            name: "compile FILENAME",
+            help: "Compiles a Solidity contract",
+        };
     }
 
     static getOptionHelp(): Array<Help> {
         return [
             {
                 name: "[ --no-optimize ]",
-                help: "Do not optimize the compiled output"
+                help: "Do not optimize the compiled output",
             },
             {
                 name: "[ --warnings ]",
-                help: "Error on any warning"
-            }
+                help: "Error on any warning",
+            },
         ];
     }
 
@@ -887,7 +910,7 @@ class CompilePlugin extends Plugin {
         try {
             result = compile(source, {
                 filename: this.filename,
-                optimize: (!this.noOptimize)
+                optimize: !this.noOptimize,
             });
         } catch (error) {
             if (error.errors) {
@@ -900,13 +923,13 @@ class CompilePlugin extends Plugin {
             throw new Error("Failed to compile contract.");
         }
 
-        let output: any = { };
+        let output: any = {};
         result.forEach((contract, index) => {
             output[contract.name] = {
                 bytecode: contract.bytecode,
                 runtime: contract.runtime,
                 interface: contract.interface.fragments.map((f) => f.format(ethers.utils.FormatTypes.full)),
-                compiler: contract.compiler
+                compiler: contract.compiler,
             };
         });
 
@@ -922,21 +945,21 @@ class DeployPlugin extends Plugin {
 
     static getHelp(): Help {
         return {
-           name: "deploy FILENAME",
-           help: "Compile and deploy a Solidity contract"
-        }
+            name: "deploy FILENAME",
+            help: "Compile and deploy a Solidity contract",
+        };
     }
 
     static getOptionHelp(): Array<Help> {
         return [
             {
                 name: "[ --no-optimize ]",
-                help: "Do not optimize the compiled output"
+                help: "Do not optimize the compiled output",
             },
             {
                 name: "[ --contract NAME ]",
-                help: "Specify the contract to deploy"
-            }
+                help: "Specify the contract to deploy",
+            },
         ];
     }
 
@@ -967,7 +990,7 @@ class DeployPlugin extends Plugin {
         try {
             result = compile(source, {
                 filename: this.filename,
-                optimize: (!this.noOptimize)
+                optimize: !this.noOptimize,
             });
         } catch (error) {
             if (error.errors) {
@@ -980,7 +1003,7 @@ class DeployPlugin extends Plugin {
             throw new Error("Failed to compile contract.");
         }
 
-        const codes = result.filter((c) => (this.contractName == null || this.contractName == c.name));
+        const codes = result.filter((c) => this.contractName == null || this.contractName == c.name);
 
         if (codes.length > 1) {
             this.throwError("Multiple contracts found; please specify a contract with --contract NAME");
@@ -997,7 +1020,7 @@ class DeployPlugin extends Plugin {
             Bytecode: codes[0].bytecode,
             Interface: codes[0].interface.fragments.map((f) => f.format(ethers.utils.FormatTypes.full)),
             Compiler: codes[0].compiler,
-            Optimizer: (this.noOptimize ? "No": "Yes")
+            Optimizer: this.noOptimize ? "No" : "Yes",
         });
 
         const contract = await factory.deploy();

@@ -6,7 +6,7 @@ import { Coder, Reader, Writer } from "./abstract-coder";
 
 export class DynamicBytesCoder extends Coder {
     constructor(type: string, localName: string) {
-       super(type, type, localName, true);
+        super(type, type, localName, true);
     }
 
     defaultValue(): string {
@@ -34,5 +34,3 @@ export class BytesCoder extends DynamicBytesCoder {
         return reader.coerce(this.name, hexlify(super.decode(reader)));
     }
 }
-
-

@@ -11,7 +11,6 @@ const logger = new Logger(version);
 
 import { JsonRpcProvider } from "./json-rpc-provider";
 
-
 export class IpcProvider extends JsonRpcProvider {
     readonly path: string;
 
@@ -37,7 +36,7 @@ export class IpcProvider extends JsonRpcProvider {
             method: method,
             params: params,
             id: 42,
-            jsonrpc: "2.0"
+            jsonrpc: "2.0",
         });
 
         return new Promise((resolve, reject) => {
@@ -46,7 +45,7 @@ export class IpcProvider extends JsonRpcProvider {
             let stream = connect(this.path);
 
             stream.on("data", (data) => {
-                response = Buffer.concat([ response, data ]);
+                response = Buffer.concat([response, data]);
             });
 
             stream.on("end", () => {

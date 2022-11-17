@@ -14,8 +14,7 @@ import { version } from "./_version";
 
 const logger = new ethers.utils.Logger(version);
 
-class UsageError extends Error { }
-
+class UsageError extends Error {}
 
 /////////////////////////////
 // Signer
@@ -52,13 +51,13 @@ async function getSigner(wrapper: WrappedSigner): Promise<ethers.Signer> {
 // selected, all future operations of that type are automatically accepted
 async function isAllowed(wrapper: WrappedSigner, message: string): Promise<boolean> {
     if (wrapper.plugin.yes) {
-        console.log(message + " (--yes => \"y\")");
+        console.log(message + ' (--yes => "y")');
         return true;
     }
 
-    let allowed = alwaysAllow.get(wrapper) || { };
+    let allowed = alwaysAllow.get(wrapper) || {};
     if (allowed[message]) {
-        console.log(message + " (previous (a)ll => \"y\")");
+        console.log(message + ' (previous (a)ll => "y")');
         return true;
     }
 
@@ -79,7 +78,9 @@ async function isAllowed(wrapper: WrappedSigner, message: string): Promise<boole
 
 function repeat(chr: string, length: number): string {
     let result = chr;
-    while (result.length < length) { result += result; }
+    while (result.length < length) {
+        result += result;
+    }
     return result.substring(0, length);
 }
 
@@ -130,8 +131,8 @@ class WrappedSigner extends ethers.Signer {
     async signMessage(message: string | ethers.utils.Bytes): Promise<string> {
         let signer = await getSigner(this);
 
-        let info: any = { };
-        if (typeof(message) === "string") {
+        let info: any = {};
+        if (typeof message === "string") {
             info["Message"] = JSON.stringify(message);
             info["Message (hex)"] = ethers.utils.hexlify(ethers.utils.toUtf8Bytes(message));
         } else {
@@ -153,7 +154,7 @@ class WrappedSigner extends ethers.Signer {
 
         await isAllowed(this, "Sign Message?");
 
-        let result = await signer.signMessage(message)
+        let result = await signer.signMessage(message);
 
         let signature = ethers.utils.splitSignature(result);
         dump("Signature", {
@@ -168,7 +169,9 @@ class WrappedSigner extends ethers.Signer {
         return result;
     }
 
-    async populateTransaction(transactionRequest: ethers.providers.TransactionRequest): Promise<ethers.providers.TransactionRequest> {
+    async populateTransaction(
+        transactionRequest: ethers.providers.TransactionRequest,
+    ): Promise<ethers.providers.TransactionRequest> {
         transactionRequest = ethers.utils.shallowCopy(transactionRequest);
 
         if (this.plugin.gasPrice != null) {
@@ -194,15 +197,21 @@ class WrappedSigner extends ethers.Signer {
 
         let tx = await ethers.utils.resolveProperties(transactionRequest);
 
-        let info: any = { };
-        if (tx.to != null) { info["To"] = tx.to; }
-        if (tx.from != null) { info["From"] = tx.from; }
-        info["Value"] = (ethers.utils.formatEther(tx.value || 0) + " ether");
-        if (tx.nonce != null) { info["Nonce"] = tx.nonce; }
+        let info: any = {};
+        if (tx.to != null) {
+            info["To"] = tx.to;
+        }
+        if (tx.from != null) {
+            info["From"] = tx.from;
+        }
+        info["Value"] = ethers.utils.formatEther(tx.value || 0) + " ether";
+        if (tx.nonce != null) {
+            info["Nonce"] = tx.nonce;
+        }
         info["Data"] = tx.data;
         info["Gas Limit"] = ethers.BigNumber.from(tx.gasLimit || 0).toString();
-        info["Gas Price"] = (ethers.utils.formatUnits(tx.gasPrice || 0, "gwei") + " gwei"),
-        info["Chain ID"] = (tx.chainId || 0);
+        (info["Gas Price"] = ethers.utils.formatUnits(tx.gasPrice || 0, "gwei") + " gwei"),
+            (info["Chain ID"] = tx.chainId || 0);
         info["Network"] = network.name;
 
         dump("Transaction:", info);
@@ -224,7 +233,9 @@ class WrappedSigner extends ethers.Signer {
         return result;
     }
 
-    async sendTransaction(transactionRequest: ethers.providers.TransactionRequest): Promise<ethers.providers.TransactionResponse> {
+    async sendTransaction(
+        transactionRequest: ethers.providers.TransactionRequest,
+    ): Promise<ethers.providers.TransactionResponse> {
         let signer = await getSigner(this);
 
         let network = await this.provider.getNetwork();
@@ -232,15 +243,21 @@ class WrappedSigner extends ethers.Signer {
         let tx: any = await this.populateTransaction(transactionRequest);
         tx = await ethers.utils.resolveProperties(tx);
 
-        let info: any = { };
-        if (tx.to != null) { info["To"] = tx.to; }
-        if (tx.from != null) { info["From"] = tx.from; }
-        info["Value"] = (ethers.utils.formatEther(tx.value || 0) + " ether");
-        if (tx.nonce != null) { info["Nonce"] = tx.nonce; }
+        let info: any = {};
+        if (tx.to != null) {
+            info["To"] = tx.to;
+        }
+        if (tx.from != null) {
+            info["From"] = tx.from;
+        }
+        info["Value"] = ethers.utils.formatEther(tx.value || 0) + " ether";
+        if (tx.nonce != null) {
+            info["Nonce"] = tx.nonce;
+        }
         info["Data"] = tx.data;
         info["Gas Limit"] = ethers.BigNumber.from(tx.gasLimit || 0).toString();
-        info["Gas Price"] = (ethers.utils.formatUnits(tx.gasPrice || 0, "gwei") + " gwei"),
-        info["Chain ID"] = (tx.chainId || 0);
+        (info["Gas Price"] = ethers.utils.formatUnits(tx.gasPrice || 0, "gwei") + " gwei"),
+            (info["Chain ID"] = tx.chainId || 0);
         info["Network"] = network.name;
 
         dump("Transaction:", info);
@@ -250,7 +267,7 @@ class WrappedSigner extends ethers.Signer {
         let response = await signer.sendTransaction(tx);
 
         dump("Response:", {
-            "Hash": response.hash
+            Hash: response.hash,
         });
 
         if (this.plugin.wait) {
@@ -260,11 +277,11 @@ class WrappedSigner extends ethers.Signer {
                     "Block Number": receipt.blockNumber,
                     "Block Hash": receipt.blockHash,
                     "Gas Used": ethers.utils.commify(receipt.gasUsed.toString()),
-                    "Fee": (ethers.utils.formatEther(receipt.gasUsed.mul(tx.gasPrice)) + " ether")
+                    Fee: ethers.utils.formatEther(receipt.gasUsed.mul(tx.gasPrice)) + " ether",
                 });
             } catch (error) {
                 dump("Failed:", {
-                    "Error": error.message
+                    Error: error.message,
                 });
             }
         }
@@ -292,27 +309,33 @@ class OfflineProvider extends ethers.providers.BaseProvider {
 // Argument Parser
 
 export class ArgParser {
-    readonly _args: Array<string>
-    readonly _consumed: Array<boolean>
+    readonly _args: Array<string>;
+    readonly _consumed: Array<boolean>;
 
     constructor(args: Array<string>) {
         ethers.utils.defineReadOnly(this, "_args", args);
-        ethers.utils.defineReadOnly(this, "_consumed", args.map((a) => false));
+        ethers.utils.defineReadOnly(
+            this,
+            "_consumed",
+            args.map((a) => false),
+        );
     }
 
     _finalizeArgs(): Array<string> {
-        let args = [ ];
+        let args = [];
         for (let i = 0; i < this._args.length; i++) {
-            if (this._consumed[i]) { continue; }
+            if (this._consumed[i]) {
+                continue;
+            }
 
             let arg = this._args[i];
 
             // Escaped args, add the rest as args
             if (arg === "--") {
-               for (let j = i + 1; j < this._args.length; j++) {
-                   args.push(this._args[j]);
-               }
-               break;
+                for (let j = i + 1; j < this._args.length; j++) {
+                    args.push(this._args[j]);
+                }
+                break;
             }
 
             if (arg.substring(0, 2) === "--") {
@@ -326,7 +349,9 @@ export class ArgParser {
 
     _checkCommandIndex() {
         for (let i = 0; i < this._args.length; i++) {
-            if (this._consumed[i]) { continue; }
+            if (this._consumed[i]) {
+                continue;
+            }
             return i;
         }
         return -1;
@@ -336,8 +361,10 @@ export class ArgParser {
         let count = 0;
         for (let i = 0; i < this._args.length; i++) {
             let arg = this._args[i];
-            if (arg === "--") { break; }
-            if (arg === ("--" + name)) {
+            if (arg === "--") {
+                break;
+            }
+            if (arg === "--" + name) {
                 count++;
                 this._consumed[i] = true;
             }
@@ -347,21 +374,27 @@ export class ArgParser {
             throw new UsageError("expected at most one --${name}");
         }
 
-        return (count === 1);
+        return count === 1;
     }
 
-    consumeMultiOptions(names: Array<string>): Array<{ name: string, value: string }> {
-        let result: Array<{ name: string, value: string }> = [ ];
+    consumeMultiOptions(names: Array<string>): Array<{ name: string; value: string }> {
+        let result: Array<{ name: string; value: string }> = [];
 
-        if (typeof(names) === "string") { names = [ names ]; }
+        if (typeof names === "string") {
+            names = [names];
+        }
 
         for (let i = 0; i < this._args.length; i++) {
             let arg = this._args[i];
-            if (arg === "--") { break; }
+            if (arg === "--") {
+                break;
+            }
             if (arg.substring(0, 2) === "--") {
                 let name = arg.substring(2);
                 let index = names.indexOf(name);
-                if (index < 0) { continue; }
+                if (index < 0) {
+                    continue;
+                }
 
                 if (this._args.length === i) {
                     throw new UsageError("missing argument for --${name}");
@@ -376,7 +409,7 @@ export class ArgParser {
     }
 
     consumeOptions(name: string): Array<string> {
-        return this.consumeMultiOptions([ name ]).map((o) => o.value);
+        return this.consumeMultiOptions([name]).map((o) => o.value);
     }
 
     consumeOption(name: string): string {
@@ -384,7 +417,7 @@ export class ArgParser {
         if (options.length > 1) {
             throw new UsageError(`expected at most one --${name}`);
         }
-        return (options.length ? options[0]: null);
+        return options.length ? options[0] : null;
     }
 }
 
@@ -394,7 +427,6 @@ export class ArgParser {
 //   - raw private key
 //   - mnemonic
 async function loadAccount(arg: string, plugin: Plugin, preventFile?: boolean): Promise<WrappedSigner> {
-
     // Secure entry; use prompt with mask
     if (arg === "-") {
         const content = await getPassword("Private Key / Mnemonic: ");
@@ -403,8 +435,8 @@ async function loadAccount(arg: string, plugin: Plugin, preventFile?: boolean): 
 
     // Raw private key
     if (ethers.utils.isHexString(arg, 32)) {
-         const signer = new ethers.Wallet(arg, plugin.provider);
-         return Promise.resolve(new WrappedSigner(signer.getAddress(), () => Promise.resolve(signer), plugin));
+        const signer = new ethers.Wallet(arg, plugin.provider);
+        return Promise.resolve(new WrappedSigner(signer.getAddress(), () => Promise.resolve(signer), plugin));
     }
 
     // Mnemonic
@@ -416,29 +448,31 @@ async function loadAccount(arg: string, plugin: Plugin, preventFile?: boolean): 
                 let node = ethers.utils.HDNode.fromMnemonic(mnemonic, password).derivePath(plugin.mnemonicPath);
                 return new ethers.Wallet(node.privateKey, plugin.provider);
             });
-
         } else if (plugin._xxxMnemonicPasswordHard) {
             signerPromise = getPassword("Password (mnemonic; experimental - hard): ").then((password) => {
                 let passwordBytes = ethers.utils.toUtf8Bytes(password, ethers.utils.UnicodeNormalizationForm.NFKC);
                 let saltBytes = ethers.utils.arrayify(ethers.utils.HDNode.fromMnemonic(mnemonic).privateKey);
 
                 let progressBar = getProgressBar("Decrypting");
-                return scrypt.scrypt(passwordBytes, saltBytes, (1 << 20), 8, 1, 32, progressBar).then((key) => {
+                return scrypt.scrypt(passwordBytes, saltBytes, 1 << 20, 8, 1, 32, progressBar).then((key) => {
                     const derivedPassword = ethers.utils.hexlify(key).substring(2);
-                    const node = ethers.utils.HDNode.fromMnemonic(mnemonic, derivedPassword).derivePath(plugin.mnemonicPath);
+                    const node = ethers.utils.HDNode.fromMnemonic(mnemonic, derivedPassword).derivePath(
+                        plugin.mnemonicPath,
+                    );
                     return new ethers.Wallet(node.privateKey, plugin.provider);
                 });
             });
-
         } else {
             signerPromise = Promise.resolve(ethers.Wallet.fromMnemonic(arg).connect(plugin.provider));
         }
 
-        return Promise.resolve(new WrappedSigner(
-             signerPromise.then((wallet) => wallet.getAddress()),
-             () => signerPromise,
-             plugin
-        ));
+        return Promise.resolve(
+            new WrappedSigner(
+                signerPromise.then((wallet) => wallet.getAddress()),
+                () => signerPromise,
+                plugin,
+            ),
+        );
     }
 
     // Check for a JSON wallet
@@ -447,21 +481,23 @@ async function loadAccount(arg: string, plugin: Plugin, preventFile?: boolean): 
 
         let address = ethers.utils.getJsonWalletAddress(content);
         if (address) {
-            return Promise.resolve(new WrappedSigner(
-                Promise.resolve(address),
-                async (): Promise<ethers.Signer> => {
-                    let password = await getPassword(`Password (${arg}): `);
+            return Promise.resolve(
+                new WrappedSigner(
+                    Promise.resolve(address),
+                    async (): Promise<ethers.Signer> => {
+                        let password = await getPassword(`Password (${arg}): `);
 
-                    let progressBar = getProgressBar("Decrypting");
-                    return ethers.Wallet.fromEncryptedJson(content, password, progressBar).then((wallet) => {
-                        return wallet.connect(plugin.provider);
-                    });
-                },
-                plugin));
+                        let progressBar = getProgressBar("Decrypting");
+                        return ethers.Wallet.fromEncryptedJson(content, password, progressBar).then((wallet) => {
+                            return wallet.connect(plugin.provider);
+                        });
+                    },
+                    plugin,
+                ),
+            );
         } else {
             return loadAccount(content.trim(), plugin, true);
         }
-
     } catch (error) {
         if (error.message === "cancelled") {
             throw new Error("Cancelled.");
@@ -474,7 +510,6 @@ async function loadAccount(arg: string, plugin: Plugin, preventFile?: boolean): 
     return null;
 }
 
-
 /////////////////////////////
 // Plugin Class
 
@@ -484,7 +519,7 @@ export interface Help {
 }
 
 export interface PluginType {
-    new(...args: any[]): Plugin;
+    new (...args: any[]): Plugin;
     getHelp?: () => Help;
     getOptionHelp?: () => Array<Help>;
 }
@@ -504,19 +539,18 @@ export abstract class Plugin {
     yes: boolean;
     wait: boolean;
 
-    constructor() {
-    }
+    constructor() {}
 
     static getHelp(): Help {
         return null;
     }
 
     static getOptionHelp(): Array<Help> {
-        return [ ];
+        return [];
     }
 
     async prepareOptions(argParser: ArgParser, verifyOnly?: boolean): Promise<void> {
-        let runners: Array<Promise<void>> = [ ];
+        let runners: Array<Promise<void>> = [];
 
         this.wait = argParser.consumeFlag("wait");
         this.yes = argParser.consumeFlag("yes");
@@ -524,12 +558,12 @@ export abstract class Plugin {
         /////////////////////
         // Provider
 
-        let network = (argParser.consumeOption("network") || "homestead");
-        let providers: Array<ethers.providers.BaseProvider> = [ ];
+        let network = argParser.consumeOption("network") || "homestead";
+        let providers: Array<ethers.providers.BaseProvider> = [];
 
-        let rpc: Array<ethers.providers.JsonRpcProvider> = [ ];
+        let rpc: Array<ethers.providers.JsonRpcProvider> = [];
         argParser.consumeOptions("rpc").forEach((url) => {
-            let provider = new ethers.providers.JsonRpcProvider(url)
+            let provider = new ethers.providers.JsonRpcProvider(url);
             providers.push(provider);
             rpc.push(provider);
         });
@@ -562,34 +596,39 @@ export abstract class Plugin {
             ethers.utils.defineReadOnly(this, "provider", ethers.getDefaultProvider(network));
         }
 
-
         /////////////////////
         // Accounts
 
         ethers.utils.defineReadOnly(this, "mnemonicPassword", argParser.consumeFlag("mnemonic-password"));
 
-        ethers.utils.defineReadOnly(this, "mnemonicPath", (function() {
-            let mnemonicPath = argParser.consumeOption("mnemonic-path");
-            if (mnemonicPath) {
-                if (mnemonicPath.match(/^[0-9]+$/)) {
-                    return `m/44'/60'/${ mnemonicPath }'/0/0`;
+        ethers.utils.defineReadOnly(
+            this,
+            "mnemonicPath",
+            (function () {
+                let mnemonicPath = argParser.consumeOption("mnemonic-path");
+                if (mnemonicPath) {
+                    if (mnemonicPath.match(/^[0-9]+$/)) {
+                        return `m/44'/60'/${mnemonicPath}'/0/0`;
+                    }
+                    return mnemonicPath;
                 }
-                return mnemonicPath;
-            }
-            return ethers.utils.defaultPath;
-        })());
+                return ethers.utils.defaultPath;
+            })(),
+        );
 
         ethers.utils.defineReadOnly(this, "_xxxMnemonicPasswordHard", argParser.consumeFlag("xxx-mnemonic-password"));
 
-        let accounts: Array<WrappedSigner> = [ ];
+        let accounts: Array<WrappedSigner> = [];
 
-        let accountOptions = argParser.consumeMultiOptions([ "account", "account-rpc", "account-void" ]);
+        let accountOptions = argParser.consumeMultiOptions(["account", "account-rpc", "account-void"]);
         for (let i = 0; i < accountOptions.length; i++) {
             let account = accountOptions[i];
             switch (account.name) {
                 case "account":
                     // Verifying does not need to ask for passwords, etc.
-                    if (verifyOnly) { break; }
+                    if (verifyOnly) {
+                        break;
+                    }
                     let wrappedSigner = await loadAccount(account.value, this);
                     accounts.push(wrappedSigner);
                     break;
@@ -625,7 +664,6 @@ export abstract class Plugin {
 
         ethers.utils.defineReadOnly(this, "accounts", Object.freeze(accounts));
 
-
         /////////////////////
         // Transaction Options
 
@@ -648,20 +686,28 @@ export abstract class Plugin {
             this.nonce = ethers.BigNumber.from(nonce).toNumber();
         }
 
-
         // Now wait for all asynchronous options to load
 
-        runners.push(this.provider.getNetwork().then((network) => {
-            ethers.utils.defineReadOnly(this, "network", Object.freeze(network));
-        }, (error) => {
-            ethers.utils.defineReadOnly(this, "network", Object.freeze({
-                chainId: 0,
-                name: "no-network"
-            }));
-        }));
+        runners.push(
+            this.provider.getNetwork().then(
+                (network) => {
+                    ethers.utils.defineReadOnly(this, "network", Object.freeze(network));
+                },
+                (error) => {
+                    ethers.utils.defineReadOnly(
+                        this,
+                        "network",
+                        Object.freeze({
+                            chainId: 0,
+                            name: "no-network",
+                        }),
+                    );
+                },
+            ),
+        );
 
         try {
-            await Promise.all(runners)
+            await Promise.all(runners);
         } catch (error) {
             this.throwError(error);
         }
@@ -678,7 +724,7 @@ export abstract class Plugin {
     getAddress(addressOrName: string, message?: string, allowZero?: boolean): Promise<string> {
         try {
             return Promise.resolve(ethers.utils.getAddress(addressOrName));
-        } catch (error) { }
+        } catch (error) {}
 
         return this.provider.resolveName(addressOrName).then((address) => {
             if (address == null) {
@@ -716,7 +762,6 @@ class CheckPlugin extends Plugin {
     }
 }
 
-
 /////////////////////////////
 // Command Line Runner
 
@@ -729,7 +774,7 @@ export type Options = {
 
 export class CLI {
     readonly defaultCommand: string;
-    readonly plugins: { [ command: string ]: PluginType };
+    readonly plugins: { [command: string]: PluginType };
     readonly standAlone: PluginType;
     readonly options: Options;
 
@@ -743,25 +788,29 @@ export class CLI {
 
         if (options) {
             ["account", "provider", "transaction"].forEach((key) => {
-                if ((<any>options)[key] == null) { return; }
-                (<any>(this.options))[key] = !!((<any>options)[key]);
+                if ((<any>options)[key] == null) {
+                    return;
+                }
+                (<any>this.options)[key] = !!(<any>options)[key];
             });
 
             ["version"].forEach((key) => {
-                if ((<any>options)[key] == null) { return; }
-                (<any>(this.options))[key] = (<any>options)[key];
+                if ((<any>options)[key] == null) {
+                    return;
+                }
+                (<any>this.options)[key] = (<any>options)[key];
             });
         }
         Object.freeze(this.options);
 
         ethers.utils.defineReadOnly(this, "defaultCommand", defaultCommand || null);
-        ethers.utils.defineReadOnly(this, "plugins", { });
+        ethers.utils.defineReadOnly(this, "plugins", {});
     }
 
     static getAppName(): string {
         try {
             return basename(process.mainModule.filename).split(".")[0];
-        } catch (error) { }
+        } catch (error) {}
         return "ethers";
     }
 
@@ -770,12 +819,12 @@ export class CLI {
     addPlugin(command: string, plugin: PluginType) {
         if (this.standAlone) {
             logger.throwError("only setPlugin or addPlugin may be used at once", ethers.errors.UNSUPPORTED_OPERATION, {
-                operation: "addPlugin"
+                operation: "addPlugin",
             });
         } else if (this.plugins[command]) {
             logger.throwError("command already exists", ethers.errors.UNSUPPORTED_OPERATION, {
                 operation: "addPlugin",
-                command: command
+                command: command,
             });
         }
         ethers.utils.defineReadOnly(this.plugins, command, plugin);
@@ -784,12 +833,12 @@ export class CLI {
     setPlugin(plugin: PluginType) {
         if (Object.keys(this.plugins).length !== 0) {
             logger.throwError("only setPlugin or addPlugin may be used at once", ethers.errors.UNSUPPORTED_OPERATION, {
-                operation: "setPlugin"
+                operation: "setPlugin",
             });
         }
         if (this.standAlone) {
             logger.throwError("cannot setPlugin more than once", ethers.errors.UNSUPPORTED_OPERATION, {
-                operation: "setPlugin"
+                operation: "setPlugin",
             });
         }
         ethers.utils.defineReadOnly(this, "standAlone", plugin);
@@ -801,7 +850,7 @@ export class CLI {
 
         if (this.standAlone) {
             let help = ethers.utils.getStatic<() => Help>(this.standAlone, "getHelp")();
-            console.log(`   ${ CLI.getAppName() } ${ help.name } [ OPTIONS ]`);
+            console.log(`   ${CLI.getAppName()} ${help.name} [ OPTIONS ]`);
             console.log("");
 
             let lines: Array<string> = [];
@@ -818,12 +867,11 @@ export class CLI {
                 console.log("");
             }
         } else {
-
             if (this.defaultCommand) {
-                console.log(`   ${ CLI.getAppName() } [ COMMAND ] [ ARGS ] [ OPTIONS ]`);
+                console.log(`   ${CLI.getAppName()} [ COMMAND ] [ ARGS ] [ OPTIONS ]`);
                 console.log("");
             } else {
-                console.log(`   ${ CLI.getAppName() } COMMAND [ ARGS ] [ OPTIONS ]`);
+                console.log(`   ${CLI.getAppName()} COMMAND [ ARGS ] [ OPTIONS ]`);
                 console.log("");
             }
 
@@ -831,7 +879,9 @@ export class CLI {
             for (let cmd in this.plugins) {
                 let plugin = this.plugins[cmd];
                 let help = ethers.utils.getStatic<() => Help>(plugin, "getHelp")();
-                if (help == null) { continue; }
+                if (help == null) {
+                    continue;
+                }
                 let helpLine = "   " + help.name;
                 if (helpLine.length > 28) {
                     lines.push(helpLine);
@@ -849,7 +899,7 @@ export class CLI {
 
             if (lines.length) {
                 if (this.defaultCommand) {
-                    console.log(`COMMANDS (default: ${ this.defaultCommand })`);
+                    console.log(`COMMANDS (default: ${this.defaultCommand})`);
                 } else {
                     console.log("COMMANDS");
                 }
@@ -940,7 +990,7 @@ export class CLI {
             await plugin.prepareOptions(argParser);
 
             // These are not part of the plugin
-            [ "debug", "help", "version"].forEach((key) => {
+            ["debug", "help", "version"].forEach((key) => {
                 argParser.consumeFlag(key);
             });
 
@@ -973,12 +1023,14 @@ export class CLI {
         // Create Plug-in instance
         let plugin: Plugin = null;
         if (this.standAlone) {
-            plugin = new this.standAlone;
+            plugin = new this.standAlone();
         } else {
             try {
                 plugin = new this.plugins[command]();
             } catch (error) {
-                if (command) { this.showUsage("unknown command - " + command); }
+                if (command) {
+                    this.showUsage("unknown command - " + command);
+                }
                 return this.showUsage("no command provided", 1);
             }
         }
@@ -987,16 +1039,15 @@ export class CLI {
             await plugin.prepareOptions(argParser);
             await plugin.prepareArgs(argParser._finalizeArgs());
             await plugin.run();
-
         } catch (error) {
             if (error instanceof UsageError) {
                 return this.showUsage(error.message, 1);
             }
 
             if (debug) {
-                console.log("----- <DEBUG> ------")
+                console.log("----- <DEBUG> ------");
                 console.log(error);
-                console.log("----- </DEBUG> -----")
+                console.log("----- </DEBUG> -----");
             }
 
             console.log("Error: " + error.message);
@@ -1004,4 +1055,3 @@ export class CLI {
         }
     }
 }
-

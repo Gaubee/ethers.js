@@ -18,15 +18,19 @@ function staller(duration: number): Promise<void> {
 }
 
 function bodyify(value: any, type: string): string {
-    if (value == null) { return null; }
+    if (value == null) {
+        return null;
+    }
 
-    if (typeof(value) === "string") { return value; }
+    if (typeof value === "string") {
+        return value;
+    }
 
     if (isBytesLike(value)) {
         if (type && (type.split("/")[0] === "text" || type.split(";")[0].trim() === "application/json")) {
             try {
                 return toUtf8String(value);
-            } catch (error) { };
+            } catch (error) {}
         }
         return hexlify(value);
     }
@@ -36,24 +40,24 @@ function bodyify(value: any, type: string): string {
 
 // Exported Types
 export type ConnectionInfo = {
-    url: string,
-    headers?: { [key: string]: string | number }
+    url: string;
+    headers?: { [key: string]: string | number };
 
-    user?: string,
-    password?: string,
+    user?: string;
+    password?: string;
 
-    allowInsecureAuthentication?: boolean,
-    allowGzip?: boolean,
+    allowInsecureAuthentication?: boolean;
+    allowGzip?: boolean;
 
-    throttleLimit?: number,
+    throttleLimit?: number;
     throttleSlotInterval?: number;
-    throttleCallback?: (attempt: number, url: string) => Promise<boolean>,
+    throttleCallback?: (attempt: number, url: string) => Promise<boolean>;
 
     skipFetchSetup?: boolean;
     fetchOptions?: Record<string, string>;
     errorPassThrough?: boolean;
 
-    timeout?: number,
+    timeout?: number;
 };
 
 export interface OnceBlockable {
@@ -65,27 +69,28 @@ export interface OncePollable {
 }
 
 export type PollOptions = {
-    timeout?: number,
-    floor?: number,
-    ceiling?: number,
-    interval?: number,
-    retryLimit?: number,
-    onceBlock?: OnceBlockable
-    oncePoll?: OncePollable
+    timeout?: number;
+    floor?: number;
+    ceiling?: number;
+    interval?: number;
+    retryLimit?: number;
+    onceBlock?: OnceBlockable;
+    oncePoll?: OncePollable;
 };
 
 export type FetchJsonResponse = {
     statusCode: number;
-    headers: { [ header: string ]: string };
+    headers: { [header: string]: string };
 };
 
-
-type Header = { key: string, value: string };
+type Header = { key: string; value: string };
 
 function unpercent(value: string): Uint8Array {
-    return toUtf8Bytes(value.replace(/%([0-9a-f][0-9a-f])/gi, (all, code) => {
-        return String.fromCharCode(parseInt(code, 16));
-    }));
+    return toUtf8Bytes(
+        value.replace(/%([0-9a-f][0-9a-f])/gi, (all, code) => {
+            return String.fromCharCode(parseInt(code, 16));
+        }),
+    );
 }
 
 // This API is still a work in progress; the future changes will likely be:
@@ -94,21 +99,36 @@ function unpercent(value: string): Uint8Array {
 //   - If string => text/plain, Uint8Array => application/octet-stream (if content-type unspecified)
 // - FetchDataRequest.processFunc = (body: Uint8Array, response: FetchDataResponse) => T
 // For this reason, it should be considered internal until the API is finalized
-export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, body?: Uint8Array, processFunc?: (value: Uint8Array, response: FetchJsonResponse) => T): Promise<T> {
-
+export function _fetchData<T = Uint8Array>(
+    connection: string | ConnectionInfo,
+    body?: Uint8Array,
+    processFunc?: (value: Uint8Array, response: FetchJsonResponse) => T,
+): Promise<T> {
     // How many times to retry in the event of a throttle
-    const attemptLimit = (typeof(connection) === "object" && connection.throttleLimit != null) ? connection.throttleLimit: 12;
-    logger.assertArgument((attemptLimit > 0 && (attemptLimit % 1) === 0),
-        "invalid connection throttle limit", "connection.throttleLimit", attemptLimit);
+    const attemptLimit =
+        typeof connection === "object" && connection.throttleLimit != null ? connection.throttleLimit : 12;
+    logger.assertArgument(
+        attemptLimit > 0 && attemptLimit % 1 === 0,
+        "invalid connection throttle limit",
+        "connection.throttleLimit",
+        attemptLimit,
+    );
 
-    const throttleCallback = ((typeof(connection) === "object") ? connection.throttleCallback: null);
-    const throttleSlotInterval = ((typeof(connection) === "object" && typeof(connection.throttleSlotInterval) === "number") ? connection.throttleSlotInterval: 100);
-    logger.assertArgument((throttleSlotInterval > 0 && (throttleSlotInterval % 1) === 0),
-        "invalid connection throttle slot interval", "connection.throttleSlotInterval", throttleSlotInterval);
+    const throttleCallback = typeof connection === "object" ? connection.throttleCallback : null;
+    const throttleSlotInterval =
+        typeof connection === "object" && typeof connection.throttleSlotInterval === "number"
+            ? connection.throttleSlotInterval
+            : 100;
+    logger.assertArgument(
+        throttleSlotInterval > 0 && throttleSlotInterval % 1 === 0,
+        "invalid connection throttle slot interval",
+        "connection.throttleSlotInterval",
+        throttleSlotInterval,
+    );
 
-    const errorPassThrough = ((typeof(connection) === "object") ? !!(connection.errorPassThrough): false);
+    const errorPassThrough = typeof connection === "object" ? !!connection.errorPassThrough : false;
 
-    const headers: { [key: string]: Header } = { };
+    const headers: { [key: string]: Header } = {};
 
     let url: string = null;
 
@@ -121,17 +141,16 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
 
     let timeout = 2 * 60 * 1000;
 
-    if (typeof(connection) === "string") {
+    if (typeof connection === "string") {
         url = connection;
-
-    } else if (typeof(connection) === "object") {
+    } else if (typeof connection === "object") {
         if (connection == null || connection.url == null) {
             logger.throwArgumentError("missing URL", "connection.url", connection);
         }
 
         url = connection.url;
 
-        if (typeof(connection.timeout) === "number" && connection.timeout > 0) {
+        if (typeof connection.timeout === "number" && connection.timeout > 0) {
             timeout = connection.timeout;
         }
 
@@ -148,17 +167,18 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
 
         if (connection.user != null && connection.password != null) {
             if (url.substring(0, 6) !== "https:" && connection.allowInsecureAuthentication !== true) {
-                logger.throwError(
-                    "basic authentication requires a secure https url",
-                    Logger.errors.INVALID_ARGUMENT,
-                    { argument: "url", url: url, user: connection.user, password: "[REDACTED]" }
-                );
+                logger.throwError("basic authentication requires a secure https url", Logger.errors.INVALID_ARGUMENT, {
+                    argument: "url",
+                    url: url,
+                    user: connection.user,
+                    password: "[REDACTED]",
+                });
             }
 
             const authorization = connection.user + ":" + connection.password;
             headers["authorization"] = {
                 key: "Authorization",
-                value: "Basic " + base64Encode(toUtf8Bytes(authorization))
+                value: "Basic " + base64Encode(toUtf8Bytes(authorization)),
             };
         }
 
@@ -172,29 +192,28 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
     }
 
     const reData = new RegExp("^data:([^;:]*)?(;base64)?,(.*)$", "i");
-    const dataMatch = ((url) ? url.match(reData): null);
+    const dataMatch = url ? url.match(reData) : null;
     if (dataMatch) {
         try {
             const response = {
                 statusCode: 200,
                 statusMessage: "OK",
-                headers: { "content-type": (dataMatch[1] || "text/plain")},
-                body: (dataMatch[2] ? base64Decode(dataMatch[3]): unpercent(dataMatch[3]))
+                headers: { "content-type": dataMatch[1] || "text/plain" },
+                body: dataMatch[2] ? base64Decode(dataMatch[3]) : unpercent(dataMatch[3]),
             };
 
-            let result: T = <T><unknown>response.body;
+            let result: T = <T>(<unknown>response.body);
             if (processFunc) {
                 result = processFunc(response.body, response);
             }
-            return Promise.resolve(<T><unknown>result);
-
+            return Promise.resolve(<T>(<unknown>result));
         } catch (error) {
             logger.throwError("processing response error", Logger.errors.SERVER_ERROR, {
                 body: bodyify(dataMatch[1], dataMatch[2]),
                 error: error,
                 requestBody: null,
                 requestMethod: "GET",
-                url: url
+                url: url,
             });
         }
     }
@@ -210,42 +229,47 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
         }
     }
 
-    const flatHeaders: { [ key: string ]: string } = { };
+    const flatHeaders: { [key: string]: string } = {};
     Object.keys(headers).forEach((key) => {
         const header = headers[key];
         flatHeaders[header.key] = header.value;
     });
     options.headers = flatHeaders;
 
-    const runningTimeout = (function() {
+    const runningTimeout = (function () {
         let timer: NodeJS.Timer = null;
-        const promise: Promise<never> = new Promise(function(resolve, reject) {
+        const promise: Promise<never> = new Promise(function (resolve, reject) {
             if (timeout) {
                 timer = setTimeout(() => {
-                    if (timer == null) { return; }
+                    if (timer == null) {
+                        return;
+                    }
                     timer = null;
 
-                    reject(logger.makeError("timeout", Logger.errors.TIMEOUT, {
-                        requestBody: bodyify(options.body, flatHeaders["content-type"]),
-                        requestMethod: options.method,
-                        timeout: timeout,
-                        url: url
-                    }));
+                    reject(
+                        logger.makeError("timeout", Logger.errors.TIMEOUT, {
+                            requestBody: bodyify(options.body, flatHeaders["content-type"]),
+                            requestMethod: options.method,
+                            timeout: timeout,
+                            url: url,
+                        }),
+                    );
                 }, timeout);
             }
         });
 
-        const cancel = function() {
-            if (timer == null) { return; }
+        const cancel = function () {
+            if (timer == null) {
+                return;
+            }
             clearTimeout(timer);
             timer = null;
-        }
+        };
 
         return { promise, cancel };
     })();
 
-    const runningFetch = (async function() {
-
+    const runningFetch = (async function () {
         for (let attempt = 0; attempt < attemptLimit; attempt++) {
             let response: GetUrlResponse = null;
 
@@ -260,7 +284,6 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
                             url = response.headers.location;
                             continue;
                         }
-
                     } else if (response.statusCode === 429) {
                         // Exponential back-off throttling
                         let tryAgain = true;
@@ -272,7 +295,7 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
                             let stall = 0;
 
                             const retryAfter = response.headers["retry-after"];
-                            if (typeof(retryAfter) === "string" && retryAfter.match(/^[1-9][0-9]*$/)) {
+                            if (typeof retryAfter === "string" && retryAfter.match(/^[1-9][0-9]*$/)) {
                                 stall = parseInt(retryAfter) * 1000;
                             } else {
                                 stall = throttleSlotInterval * parseInt(String(Math.random() * Math.pow(2, attempt)));
@@ -284,7 +307,6 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
                         }
                     }
                 }
-
             } catch (error) {
                 response = (<any>error).response;
                 if (response == null) {
@@ -293,11 +315,10 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
                         requestBody: bodyify(options.body, flatHeaders["content-type"]),
                         requestMethod: options.method,
                         serverError: error,
-                        url: url
+                        url: url,
                     });
                 }
             }
-
 
             let body = response.body;
 
@@ -308,10 +329,10 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
                 logger.throwError("bad response", Logger.errors.SERVER_ERROR, {
                     status: response.statusCode,
                     headers: response.headers,
-                    body: bodyify(body, ((response.headers) ? response.headers["content-type"]: null)),
+                    body: bodyify(body, response.headers ? response.headers["content-type"] : null),
                     requestBody: bodyify(options.body, flatHeaders["content-type"]),
                     requestMethod: options.method,
-                    url: url
+                    url: url,
                 });
             }
 
@@ -320,7 +341,6 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
                     const result = await processFunc(body, response);
                     runningTimeout.cancel();
                     return result;
-
                 } catch (error) {
                     // Allow the processFunc to trigger a throttle
                     if (error.throttleRetry && attempt < attemptLimit) {
@@ -330,7 +350,8 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
                         }
 
                         if (tryAgain) {
-                            const timeout = throttleSlotInterval * parseInt(String(Math.random() * Math.pow(2, attempt)));
+                            const timeout =
+                                throttleSlotInterval * parseInt(String(Math.random() * Math.pow(2, attempt)));
                             //console.log("Stalling callback");
                             await staller(timeout);
                             continue;
@@ -339,11 +360,11 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
 
                     runningTimeout.cancel();
                     logger.throwError("processing response error", Logger.errors.SERVER_ERROR, {
-                        body: bodyify(body, ((response.headers) ? response.headers["content-type"]: null)),
+                        body: bodyify(body, response.headers ? response.headers["content-type"] : null),
                         error: error,
                         requestBody: bodyify(options.body, flatHeaders["content-type"]),
                         requestMethod: options.method,
-                        url: url
+                        url: url,
                     });
                 }
             }
@@ -358,14 +379,18 @@ export function _fetchData<T = Uint8Array>(connection: string | ConnectionInfo, 
         return logger.throwError("failed response", Logger.errors.SERVER_ERROR, {
             requestBody: bodyify(options.body, flatHeaders["content-type"]),
             requestMethod: options.method,
-            url: url
+            url: url,
         });
     })();
 
-    return Promise.race([ runningTimeout.promise, runningFetch ]);
+    return Promise.race([runningTimeout.promise, runningFetch]);
 }
 
-export function fetchJson(connection: string | ConnectionInfo, json?: string, processFunc?: (value: any, response: FetchJsonResponse) => any): Promise<any> {
+export function fetchJson(
+    connection: string | ConnectionInfo,
+    json?: string,
+    processFunc?: (value: any, response: FetchJsonResponse) => any,
+): Promise<any> {
     let processJsonFunc = (value: Uint8Array, response: FetchJsonResponse) => {
         let result: any = null;
         if (value != null) {
@@ -374,7 +399,7 @@ export function fetchJson(connection: string | ConnectionInfo, json?: string, pr
             } catch (error) {
                 logger.throwError("invalid JSON", Logger.errors.SERVER_ERROR, {
                     body: value,
-                    error: error
+                    error: error,
                 });
             }
         }
@@ -384,7 +409,7 @@ export function fetchJson(connection: string | ConnectionInfo, json?: string, pr
         }
 
         return result;
-    }
+    };
 
     // If we have json to send, we must
     // - add content-type of application/json (unless already overridden)
@@ -394,9 +419,10 @@ export function fetchJson(connection: string | ConnectionInfo, json?: string, pr
         body = toUtf8Bytes(json);
 
         // Create a connection with the content-type set for JSON
-        const updated: ConnectionInfo = (typeof(connection) === "string") ? ({ url: connection }): shallowCopy(connection);
+        const updated: ConnectionInfo = typeof connection === "string" ? { url: connection } : shallowCopy(connection);
         if (updated.headers) {
-            const hasContentType = (Object.keys(updated.headers).filter((k) => (k.toLowerCase() === "content-type")).length) !== 0;
+            const hasContentType =
+                Object.keys(updated.headers).filter((k) => k.toLowerCase() === "content-type").length !== 0;
             if (!hasContentType) {
                 updated.headers = shallowCopy(updated.headers);
                 updated.headers["content-type"] = "application/json";
@@ -411,68 +437,90 @@ export function fetchJson(connection: string | ConnectionInfo, json?: string, pr
 }
 
 export function poll<T>(func: () => Promise<T>, options?: PollOptions): Promise<T> {
-    if (!options) { options = {}; }
+    if (!options) {
+        options = {};
+    }
     options = shallowCopy(options);
-    if (options.floor == null) { options.floor = 0; }
-    if (options.ceiling == null) { options.ceiling = 10000; }
-    if (options.interval == null) { options.interval = 250; }
+    if (options.floor == null) {
+        options.floor = 0;
+    }
+    if (options.ceiling == null) {
+        options.ceiling = 10000;
+    }
+    if (options.interval == null) {
+        options.interval = 250;
+    }
 
-    return new Promise(function(resolve, reject) {
-
+    return new Promise(function (resolve, reject) {
         let timer: NodeJS.Timer = null;
         let done: boolean = false;
 
         // Returns true if cancel was successful. Unsuccessful cancel means we're already done.
         const cancel = (): boolean => {
-            if (done) { return false; }
+            if (done) {
+                return false;
+            }
             done = true;
-            if (timer) { clearTimeout(timer); }
+            if (timer) {
+                clearTimeout(timer);
+            }
             return true;
         };
 
         if (options.timeout) {
             timer = setTimeout(() => {
-                if (cancel()) { reject(new Error("timeout")); }
-            }, options.timeout)
+                if (cancel()) {
+                    reject(new Error("timeout"));
+                }
+            }, options.timeout);
         }
 
         const retryLimit = options.retryLimit;
 
         let attempt = 0;
         function check() {
-            return func().then(function(result) {
+            return func().then(
+                function (result) {
+                    // If we have a result, or are allowed null then we're done
+                    if (result !== undefined) {
+                        if (cancel()) {
+                            resolve(result);
+                        }
+                    } else if (options.oncePoll) {
+                        options.oncePoll.once("poll", check);
+                    } else if (options.onceBlock) {
+                        options.onceBlock.once("block", check);
 
-                // If we have a result, or are allowed null then we're done
-                if (result !== undefined) {
-                    if (cancel()) { resolve(result); }
+                        // Otherwise, exponential back-off (up to 10s) our next request
+                    } else if (!done) {
+                        attempt++;
+                        if (attempt > retryLimit) {
+                            if (cancel()) {
+                                reject(new Error("retry limit reached"));
+                            }
+                            return;
+                        }
 
-                } else if (options.oncePoll) {
-                    options.oncePoll.once("poll", check);
+                        let timeout = options.interval * parseInt(String(Math.random() * Math.pow(2, attempt)));
+                        if (timeout < options.floor) {
+                            timeout = options.floor;
+                        }
+                        if (timeout > options.ceiling) {
+                            timeout = options.ceiling;
+                        }
 
-                } else if (options.onceBlock) {
-                    options.onceBlock.once("block", check);
-
-                // Otherwise, exponential back-off (up to 10s) our next request
-                } else if (!done) {
-                    attempt++;
-                    if (attempt > retryLimit) {
-                        if (cancel()) { reject(new Error("retry limit reached")); }
-                        return;
+                        setTimeout(check, timeout);
                     }
 
-                    let timeout = options.interval * parseInt(String(Math.random() * Math.pow(2, attempt)));
-                    if (timeout < options.floor) { timeout = options.floor; }
-                    if (timeout > options.ceiling) { timeout = options.ceiling; }
-
-                    setTimeout(check, timeout);
-                }
-
-                return null;
-            }, function(error) {
-                if (cancel()) { reject(error); }
-            });
+                    return null;
+                },
+                function (error) {
+                    if (cancel()) {
+                        reject(error);
+                    }
+                },
+            );
         }
         check();
     });
 }
-

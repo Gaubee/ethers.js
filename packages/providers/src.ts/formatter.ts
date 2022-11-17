@@ -14,17 +14,17 @@ const logger = new Logger(version);
 
 export type FormatFunc = (value: any) => any;
 
-export type FormatFuncs = { [ key: string ]: FormatFunc };
+export type FormatFuncs = { [key: string]: FormatFunc };
 
 export type Formats = {
-    transaction: FormatFuncs,
-    transactionRequest: FormatFuncs,
-    receipt: FormatFuncs,
-    receiptLog: FormatFuncs,
-    block: FormatFuncs,
-    blockWithTransactions: FormatFuncs,
-    filter: FormatFuncs,
-    filterLog: FormatFuncs,
+    transaction: FormatFuncs;
+    transactionRequest: FormatFuncs;
+    receipt: FormatFuncs;
+    receiptLog: FormatFuncs;
+    block: FormatFuncs;
+    blockWithTransactions: FormatFuncs;
+    filter: FormatFuncs;
+    filterLog: FormatFuncs;
 };
 
 export class Formatter {
@@ -35,7 +35,7 @@ export class Formatter {
     }
 
     getDefaultFormats(): Formats {
-        const formats: Formats = <Formats>({ });
+        const formats: Formats = <Formats>{};
 
         const address = this.address.bind(this);
         const bigNumber = this.bigNumber.bind(this);
@@ -46,7 +46,9 @@ export class Formatter {
         const number = this.number.bind(this);
         const type = this.type.bind(this);
 
-        const strictData = (v: any) => { return this.data(v, true); };
+        const strictData = (v: any) => {
+            return this.data(v, true);
+        };
 
         formats.transaction = {
             hash: hash,
@@ -116,7 +118,7 @@ export class Formatter {
             // should be allowNull(hash), but broken-EIP-658 support is handled in receipt
             root: Formatter.allowNull(hex),
             gasUsed: bigNumber,
-            logsBloom: Formatter.allowNull(data),// @TODO: should this be data?
+            logsBloom: Formatter.allowNull(data), // @TODO: should this be data?
             blockHash: hash,
             transactionHash: hash,
             logs: Formatter.arrayOf(this.receiptLog.bind(this)),
@@ -125,7 +127,7 @@ export class Formatter {
             cumulativeGasUsed: bigNumber,
             effectiveGasPrice: Formatter.allowNull(bigNumber),
             status: Formatter.allowNull(number),
-            type: type
+            type: type,
         };
 
         formats.block = {
@@ -145,11 +147,13 @@ export class Formatter {
 
             transactions: Formatter.allowNull(Formatter.arrayOf(hash)),
 
-            baseFeePerGas: Formatter.allowNull(bigNumber)
+            baseFeePerGas: Formatter.allowNull(bigNumber),
         };
 
         formats.blockWithTransactions = shallowCopy(formats.block);
-        formats.blockWithTransactions.transactions = Formatter.allowNull(Formatter.arrayOf(this.transactionResponse.bind(this)));
+        formats.blockWithTransactions.transactions = Formatter.allowNull(
+            Formatter.arrayOf(this.transactionResponse.bind(this)),
+        );
 
         formats.filter = {
             fromBlock: Formatter.allowNull(blockTag, undefined),
@@ -185,12 +189,16 @@ export class Formatter {
     // Requires a BigNumberish that is within the IEEE754 safe integer range; returns a number
     // Strict! Used on input.
     number(number: any): number {
-        if (number === "0x") { return 0; }
+        if (number === "0x") {
+            return 0;
+        }
         return BigNumber.from(number).toNumber();
     }
 
     type(number: any): number {
-        if (number === "0x" || number == null) { return 0; }
+        if (number === "0x" || number == null) {
+            return 0;
+        }
         return BigNumber.from(number).toNumber();
     }
 
@@ -201,20 +209,28 @@ export class Formatter {
 
     // Requires a boolean, "true" or  "false"; returns a boolean
     boolean(value: any): boolean {
-        if (typeof(value) === "boolean") { return value; }
-        if (typeof(value) === "string") {
+        if (typeof value === "boolean") {
+            return value;
+        }
+        if (typeof value === "string") {
             value = value.toLowerCase();
-            if (value === "true") { return true; }
-            if (value === "false") { return false; }
+            if (value === "true") {
+                return true;
+            }
+            if (value === "false") {
+                return false;
+            }
         }
         throw new Error("invalid boolean - " + value);
     }
 
     hex(value: any, strict?: boolean): string {
-        if (typeof(value) === "string") {
-            if (!strict && value.substring(0, 2) !== "0x") { value = "0x" + value; }
+        if (typeof value === "string") {
+            if (!strict && value.substring(0, 2) !== "0x") {
+                value = "0x" + value;
+            }
             if (isHexString(value)) {
-               return value.toLowerCase();
+                return value.toLowerCase();
             }
         }
         return logger.throwArgumentError("invalid hash", "value", value);
@@ -222,7 +238,7 @@ export class Formatter {
 
     data(value: any, strict?: boolean): string {
         const result = this.hex(value, strict);
-        if ((result.length % 2) !== 0) {
+        if (result.length % 2 !== 0) {
             throw new Error("invalid data; odd-length - " + value);
         }
         return result;
@@ -235,9 +251,11 @@ export class Formatter {
     }
 
     callAddress(value: any): string {
-        if (!isHexString(value, 32)) { return null; }
+        if (!isHexString(value, 32)) {
+            return null;
+        }
         const address = getAddress(hexDataSlice(value, 12));
-        return (address === AddressZero) ? null: address;
+        return address === AddressZero ? null : address;
     }
 
     contractAddress(value: any): string {
@@ -246,17 +264,25 @@ export class Formatter {
 
     // Strict! Used on input.
     blockTag(blockTag: any): string {
-        if (blockTag == null) { return "latest"; }
+        if (blockTag == null) {
+            return "latest";
+        }
 
-        if (blockTag === "earliest") { return "0x0"; }
+        if (blockTag === "earliest") {
+            return "0x0";
+        }
 
         switch (blockTag) {
-            case "earliest": return "0x0";
-            case "latest": case "pending": case "safe": case "finalized":
+            case "earliest":
+                return "0x0";
+            case "latest":
+            case "pending":
+            case "safe":
+            case "finalized":
                 return blockTag;
         }
 
-        if (typeof(blockTag) === "number" || isHexString(blockTag)) {
+        if (typeof blockTag === "number" || isHexString(blockTag)) {
             return hexValue(<number | string>blockTag);
         }
 
@@ -274,15 +300,17 @@ export class Formatter {
 
     // Returns the difficulty as a number, or if too large (i.e. PoA network) null
     difficulty(value: any): number {
-        if (value == null) { return null; }
+        if (value == null) {
+            return null;
+        }
 
         const v = BigNumber.from(value);
 
         try {
             return v.toNumber();
-        } catch (error) { }
+        } catch (error) {}
 
-       return null;
+        return null;
     }
 
     uint256(value: any): string {
@@ -297,9 +325,9 @@ export class Formatter {
             value.miner = value.author;
         }
         // The difficulty may need to come from _difficulty in recursed blocks
-        const difficulty = (value._difficulty != null) ? value._difficulty: value.difficulty;
+        const difficulty = value._difficulty != null ? value._difficulty : value.difficulty;
         const result = Formatter.check(format, value);
-        result._difficulty = ((difficulty == null) ? null: BigNumber.from(difficulty));
+        result._difficulty = difficulty == null ? null : BigNumber.from(difficulty);
         return result;
     }
 
@@ -317,7 +345,6 @@ export class Formatter {
     }
 
     transactionResponse(transaction: any): TransactionResponse {
-
         // Rename gas to gasLimit
         if (transaction.gas != null && transaction.gasLimit == null) {
             transaction.gasLimit = transaction.gas;
@@ -339,8 +366,8 @@ export class Formatter {
             transaction.creates = this.contractAddress(transaction);
         }
 
-        if ((transaction.type === 1 || transaction.type === 2)&& transaction.accessList == null) {
-            transaction.accessList = [ ];
+        if ((transaction.type === 1 || transaction.type === 2) && transaction.accessList == null) {
+            transaction.accessList = [];
         }
 
         const result: TransactionResponse = Formatter.check(this.formats.transaction, transaction);
@@ -353,7 +380,6 @@ export class Formatter {
             }
 
             result.chainId = chainId;
-
         } else {
             let chainId = transaction.networkId;
 
@@ -366,13 +392,17 @@ export class Formatter {
                 chainId = BigNumber.from(chainId).toNumber();
             }
 
-            if (typeof(chainId) !== "number" && result.v != null) {
+            if (typeof chainId !== "number" && result.v != null) {
                 chainId = (result.v - 35) / 2;
-                if (chainId < 0) { chainId = 0; }
+                if (chainId < 0) {
+                    chainId = 0;
+                }
                 chainId = parseInt(chainId);
             }
 
-            if (typeof(chainId) !== "number") { chainId = 0; }
+            if (typeof chainId !== "number") {
+                chainId = 0;
+            }
 
             result.chainId = chainId;
         }
@@ -403,8 +433,11 @@ export class Formatter {
                 const value = BigNumber.from(result.root).toNumber();
                 if (value === 0 || value === 1) {
                     // Make sure if both are specified, they match
-                    if (result.status != null && (result.status !== value)) {
-                        logger.throwArgumentError("alt-root-status/status mismatch", "value", { root: result.root, status: result.status });
+                    if (result.status != null && result.status !== value) {
+                        logger.throwArgumentError("alt-root-status/status mismatch", "value", {
+                            root: result.root,
+                            status: result.status,
+                        });
                     }
                     result.status = value;
                     delete result.root;
@@ -427,7 +460,6 @@ export class Formatter {
     topics(value: any): any {
         if (Array.isArray(value)) {
             return value.map((v) => this.topics(v));
-
         } else if (value != null) {
             return this.hash(value, true);
         }
@@ -443,12 +475,14 @@ export class Formatter {
         return Formatter.check(this.formats.filterLog, value);
     }
 
-    static check(format: { [ name: string ]: FormatFunc }, object: any): any {
+    static check(format: { [name: string]: FormatFunc }, object: any): any {
         const result: any = {};
         for (const key in format) {
             try {
                 const value = format[key](object[key]);
-                if (value !== undefined) { result[key] = value; }
+                if (value !== undefined) {
+                    result[key] = value;
+                }
             } catch (error) {
                 error.checkKey = key;
                 error.checkValue = object[key];
@@ -460,33 +494,39 @@ export class Formatter {
 
     // if value is null-ish, nullValue is returned
     static allowNull(format: FormatFunc, nullValue?: any): FormatFunc {
-        return (function(value: any) {
-            if (value == null) { return nullValue; }
+        return function (value: any) {
+            if (value == null) {
+                return nullValue;
+            }
             return format(value);
-        });
+        };
     }
 
     // If value is false-ish, replaceValue is returned
     static allowFalsish(format: FormatFunc, replaceValue: any): FormatFunc {
-        return (function(value: any) {
-            if (!value) { return replaceValue; }
+        return function (value: any) {
+            if (!value) {
+                return replaceValue;
+            }
             return format(value);
-        });
+        };
     }
 
     // Requires an Array satisfying check
     static arrayOf(format: FormatFunc): FormatFunc {
-        return (function(array: any): Array<any> {
-            if (!Array.isArray(array)) { throw new Error("not an array"); }
+        return function (array: any): Array<any> {
+            if (!Array.isArray(array)) {
+                throw new Error("not an array");
+            }
 
             const result: any = [];
 
-            array.forEach(function(value) {
+            array.forEach(function (value) {
                 result.push(format(value));
             });
 
             return result;
-        });
+        };
     }
 }
 
@@ -495,20 +535,22 @@ export interface CommunityResourcable {
 }
 
 export function isCommunityResourcable(value: any): value is CommunityResourcable {
-    return (value && typeof(value.isCommunityResource) === "function");
+    return value && typeof value.isCommunityResource === "function";
 }
 
 export function isCommunityResource(value: any): boolean {
-    return (isCommunityResourcable(value) && value.isCommunityResource());
+    return isCommunityResourcable(value) && value.isCommunityResource();
 }
 
 // Show the throttle message only once
 let throttleMessage = false;
 export function showThrottleMessage() {
-    if (throttleMessage) { return; }
+    if (throttleMessage) {
+        return;
+    }
     throttleMessage = true;
 
-    console.log("========= NOTICE =========")
+    console.log("========= NOTICE =========");
     console.log("Request-Rate Exceeded  (this message will not be repeated)");
     console.log("");
     console.log("The default API keys for each service are provided as a highly-throttled,");
@@ -518,7 +560,6 @@ export function showThrottleMessage() {
     console.log("signing up for your own API keys to improve performance, increase your");
     console.log("request rate/limit and enable other perks, such as metrics and advanced APIs.");
     console.log("");
-    console.log("For more details: https:/\/docs.ethers.io/api-keys/");
+    console.log("For more details: https://docs.ethers.io/api-keys/");
     console.log("==========================");
 }
-

@@ -10,7 +10,7 @@ export class NumberCoder extends Coder {
     readonly signed: boolean;
 
     constructor(size: number, signed: boolean, localName: string) {
-        const name = ((signed ? "int": "uint") + (size * 8));
+        const name = (signed ? "int" : "uint") + size * 8;
         super(name, name, localName, false);
 
         this.size = size;
@@ -54,4 +54,3 @@ export class NumberCoder extends Coder {
         return reader.coerce(this.name, value);
     }
 }
-

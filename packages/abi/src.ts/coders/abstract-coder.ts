@@ -12,33 +12,33 @@ export interface Result extends ReadonlyArray<any> {
     readonly [key: string]: any;
 }
 
-export function checkResultErrors(result: Result): Array<{ path: Array<string | number>, error: Error }> {
+export function checkResultErrors(result: Result): Array<{ path: Array<string | number>; error: Error }> {
     // Find the first error (if any)
-    const errors: Array<{ path: Array<string | number>, error: Error }> = [ ];
+    const errors: Array<{ path: Array<string | number>; error: Error }> = [];
 
-    const checkErrors = function(path: Array<string | number>, object: any): void {
-        if (!Array.isArray(object)) { return; }
+    const checkErrors = function (path: Array<string | number>, object: any): void {
+        if (!Array.isArray(object)) {
+            return;
+        }
         for (let key in object) {
             const childPath = path.slice();
             childPath.push(key);
 
             try {
-                 checkErrors(childPath, object[key]);
+                checkErrors(childPath, object[key]);
             } catch (error) {
                 errors.push({ path: childPath, error: error });
             }
         }
-    }
-    checkErrors([ ], result);
+    };
+    checkErrors([], result);
 
     return errors;
-
 }
 
 export type CoerceFunc = (type: string, value: any) => any;
 
 export abstract class Coder {
-
     // The coder name:
     //   - address, uint256, tuple, array, etc.
     readonly name: string;
@@ -83,7 +83,7 @@ export class Writer {
 
     constructor(wordSize?: number) {
         defineReadOnly(this, "wordSize", wordSize || 32);
-        this._data = [ ];
+        this._data = [];
         this._dataLength = 0;
         this._padding = new Uint8Array(wordSize);
     }
@@ -91,7 +91,9 @@ export class Writer {
     get data(): string {
         return hexConcat(this._data);
     }
-    get length(): number { return this._dataLength; }
+    get length(): number {
+        return this._dataLength;
+    }
 
     _writeData(data: Uint8Array): number {
         this._data.push(data);
@@ -108,7 +110,7 @@ export class Writer {
         let bytes = arrayify(value);
         const paddingOffset = bytes.length % this.wordSize;
         if (paddingOffset) {
-            bytes = concat([ bytes, this._padding.slice(paddingOffset) ])
+            bytes = concat([bytes, this._padding.slice(paddingOffset)]);
         }
         return this._writeData(bytes);
     }
@@ -118,11 +120,11 @@ export class Writer {
         if (bytes.length > this.wordSize) {
             logger.throwError("value out-of-bounds", Logger.errors.BUFFER_OVERRUN, {
                 length: this.wordSize,
-                offset: bytes.length
+                offset: bytes.length,
             });
         }
         if (bytes.length % this.wordSize) {
-            bytes = concat([ this._padding.slice(bytes.length % this.wordSize), bytes ]);
+            bytes = concat([this._padding.slice(bytes.length % this.wordSize), bytes]);
         }
         return bytes;
     }
@@ -160,18 +162,26 @@ export class Reader {
         this._offset = 0;
     }
 
-    get data(): string { return hexlify(this._data); }
-    get consumed(): number { return this._offset; }
+    get data(): string {
+        return hexlify(this._data);
+    }
+    get consumed(): number {
+        return this._offset;
+    }
 
     // The default Coerce function
     static coerce(name: string, value: any): any {
         let match = name.match("^u?int([0-9]+)$");
-        if (match && parseInt(match[1]) <= 48) { value =  value.toNumber(); }
+        if (match && parseInt(match[1]) <= 48) {
+            value = value.toNumber();
+        }
         return value;
     }
 
     coerce(name: string, value: any): any {
-        if (this._coerceFunc) { return this._coerceFunc(name, value); }
+        if (this._coerceFunc) {
+            return this._coerceFunc(name, value);
+        }
         return Reader.coerce(name, value);
     }
 
@@ -183,11 +193,11 @@ export class Reader {
             } else {
                 logger.throwError("data out-of-bounds", Logger.errors.BUFFER_OVERRUN, {
                     length: this._data.length,
-                    offset: this._offset + alignedLength
+                    offset: this._offset + alignedLength,
                 });
             }
         }
-        return this._data.slice(this._offset, this._offset + alignedLength)
+        return this._data.slice(this._offset, this._offset + alignedLength);
     }
 
     subReader(offset: number): Reader {

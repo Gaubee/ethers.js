@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-'use strict';
+"use strict";
 
 import { ethers } from "ethers";
 import { Base58 } from "@ethersproject/basex";
 
-import { ArgParser, CLI, Help, Plugin } from '../cli';
+import { ArgParser, CLI, Help, Plugin } from "../cli";
 
 import { version } from "../_version";
 
@@ -16,14 +16,12 @@ const ensAbi = [
     "function setSubnodeOwner(bytes32 node, bytes32 label, address owner) external @500000",
     "function setResolver(bytes32 node, address resolver) external @500000",
     "function owner(bytes32 node) external view returns (address)",
-    "function resolver(bytes32 node) external view returns (address)"
+    "function resolver(bytes32 node) external view returns (address)",
 ];
 
-const States = Object.freeze([ "Open", "Auction", "Owned", "Forbidden", "Reveal", "NotAvailable" ]);
+const States = Object.freeze(["Open", "Auction", "Owned", "Forbidden", "Reveal", "NotAvailable"]);
 
-const deedAbi = [
-    "function owner() view returns (address)"
-];
+const deedAbi = ["function owner() view returns (address)"];
 
 const ethLegacyRegistrarAbi = [
     "function entries(bytes32 _hash) view returns (uint8 state, address owner, uint registrationDate, uint value, uint highestBid)",
@@ -43,7 +41,7 @@ const ethRegistrarAbi = [
     "function ownerOf(uint256 tokenId) view returns (address)",
     "function reclaim(uint256 id, address owner) @500000",
     "function safeTransferFrom(address from, address to, uint256 tokenId) @500000",
-    "function nameExpires(uint256 id) external view returns(uint)"
+    "function nameExpires(uint256 id) external view returns(uint)",
 ];
 
 const resolverAbi = [
@@ -59,9 +57,8 @@ const resolverAbi = [
 ];
 
 //const InterfaceID_ERC721      = "0x6ccb2df4";
-const InterfaceID_Controller  = "0x018fac06";
-const InterfaceID_Legacy      = "0x7ba18ba1";
-
+const InterfaceID_Controller = "0x018fac06";
+const InterfaceID_Legacy = "0x7ba18ba1";
 
 /*
 
@@ -70,19 +67,20 @@ const reverseRegistrarAbi = [
 */
 
 function listify(words: Array<string>): string {
-    if (words.length === 1) { return words[0]; }
+    if (words.length === 1) {
+        return words[0];
+    }
     return words.slice(0, words.length - 1).join(", ") + " and " + words[words.length - 1];
 }
-
 
 let cli = new CLI();
 
 abstract class EnsPlugin extends Plugin {
-    _ethAddressCache: { [ addressOrInterfaceId: string ]: string };
+    _ethAddressCache: { [addressOrInterfaceId: string]: string };
 
     constructor() {
         super();
-        ethers.utils.defineReadOnly(this, "_ethAddressCache", { });
+        ethers.utils.defineReadOnly(this, "_ethAddressCache", {});
     }
 
     getEns(): ethers.Contract {
@@ -123,14 +121,13 @@ abstract class EnsPlugin extends Plugin {
 }
 
 class LookupPlugin extends EnsPlugin {
-
     names: Array<string>;
 
     static getHelp(): Help {
         return {
-           name: "lookup [ NAME | ADDRESS [ ... ] ]",
-           help: "Lookup a name or address"
-        }
+            name: "lookup [ NAME | ADDRESS [ ... ] ]",
+            help: "Lookup a name or address",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -153,8 +150,8 @@ class LookupPlugin extends EnsPlugin {
 
             let nodehash = ethers.utils.namehash(name);
 
-            let details: { [ key: string]: string } = {
-                Nodehash: nodehash
+            let details: { [key: string]: string } = {
+                Nodehash: nodehash,
             };
 
             let owner = await ens.owner(nodehash);
@@ -191,8 +188,8 @@ class LookupPlugin extends EnsPlugin {
 
                         details.Registrant = await deed.owner();
                         details.Registrar = "Legacy";
-                        details["Deed Value"] = (ethers.utils.formatEther(entry.value) + " ether");
-                        details["Highest Bid"] = (ethers.utils.formatEther(entry.highestBid) + " ether");
+                        details["Deed Value"] = ethers.utils.formatEther(entry.value) + " ether";
+                        details["Highest Bid"] = ethers.utils.formatEther(entry.highestBid) + " ether";
                     }
                 }
             }
@@ -201,29 +198,46 @@ class LookupPlugin extends EnsPlugin {
                 let resolver = new ethers.Contract(resolverAddress, resolverAbi, this.provider);
                 details["Address"] = await resolver.addr(nodehash);
 
-                let email = await resolver.text(nodehash, "email").catch((error: any) => (""));
-                if (email) { details["E-mail"] = email; }
+                let email = await resolver.text(nodehash, "email").catch((error: any) => "");
+                if (email) {
+                    details["E-mail"] = email;
+                }
 
-                let website = await resolver.text(nodehash, "url").catch((error: any) => (""));
-                if (website) { details["Website"] = website; }
+                let website = await resolver.text(nodehash, "url").catch((error: any) => "");
+                if (website) {
+                    details["Website"] = website;
+                }
 
-                let content = await resolver.contenthash(nodehash).then((hash: string) => {
-                    if (hash === "0x") { return ""; }
-                    if (hash.substring(0, 10) === "0xe3010170" && ethers.utils.isHexString(hash, 38)) {
-                        return Base58.encode(ethers.utils.hexDataSlice(hash, 4)) + " (IPFS)";
-                    }
-                    return hash + " (unknown format)";
-                }, (error: any) => (""));
-                if (content) { details["Content Hash"] = content; }
+                let content = await resolver.contenthash(nodehash).then(
+                    (hash: string) => {
+                        if (hash === "0x") {
+                            return "";
+                        }
+                        if (hash.substring(0, 10) === "0xe3010170" && ethers.utils.isHexString(hash, 38)) {
+                            return Base58.encode(ethers.utils.hexDataSlice(hash, 4)) + " (IPFS)";
+                        }
+                        return hash + " (unknown format)";
+                    },
+                    (error: any) => "",
+                );
+                if (content) {
+                    details["Content Hash"] = content;
+                }
             }
 
-            let ordered: { [ key: string]: string } = { };
-            "Nodehash,Labelhash,Available,Registrant,Controller,Resolver,Address,Registrar,Deed Value,Highest Bid,E-mail,Website,Content Hash".split(",").forEach((key) => {
-                if (!details[key]) { return; }
-                ordered[key] = details[key];
-            });
+            let ordered: { [key: string]: string } = {};
+            "Nodehash,Labelhash,Available,Registrant,Controller,Resolver,Address,Registrar,Deed Value,Highest Bid,E-mail,Website,Content Hash"
+                .split(",")
+                .forEach((key) => {
+                    if (!details[key]) {
+                        return;
+                    }
+                    ordered[key] = details[key];
+                });
             for (let key in details) {
-                if (ordered[key]) { continue; }
+                if (ordered[key]) {
+                    continue;
+                }
                 ordered[key] = details[key];
             }
 
@@ -239,7 +253,7 @@ abstract class AccountPlugin extends EnsPlugin {
 
     static getHelp(): Help {
         return logger.throwError("subclasses must implement this", ethers.errors.UNSUPPORTED_OPERATION, {
-            operation: "getHelp"
+            operation: "getHelp",
         });
     }
 
@@ -266,16 +280,15 @@ abstract class AccountPlugin extends EnsPlugin {
             this.throwError(command + " requires exactly " + listify(params));
         }
 
-        for (let i = 0; i < params.length; i++ ) {
+        for (let i = 0; i < params.length; i++) {
             await this._setValue(params[i].toLowerCase(), args[i]);
         }
     }
 }
 
-
 abstract class ControllerPlugin extends AccountPlugin {
     salt: string;
-    owner: string
+    owner: string;
     label: string;
     duration: number;
 
@@ -283,20 +296,20 @@ abstract class ControllerPlugin extends AccountPlugin {
         return [
             {
                 name: "[ --duration DAYS ]",
-                help: "Register duration (default: 365 days)"
+                help: "Register duration (default: 365 days)",
             },
             {
                 name: "[ --salt SALT ]",
-                help: "SALT to blind the commit with"
+                help: "SALT to blind the commit with",
             },
             {
                 name: "[ --secret SECRET ]",
-                help: "Use id(SECRET) as the salt"
+                help: "Use id(SECRET) as the salt",
             },
             {
                 name: "[ --owner OWNER ]",
-                help: "The target owner (default: current account)"
-            }
+                help: "The target owner (default: current account)",
+            },
         ];
     }
 
@@ -350,12 +363,11 @@ abstract class ControllerPlugin extends AccountPlugin {
 }
 
 class CommitPlugin extends ControllerPlugin {
-
     static getHelp(): Help {
         return {
-           name: "commit NAME",
-           help: "Submit a pre-commitment"
-        }
+            name: "commit NAME",
+            help: "Submit a pre-commitment",
+        };
     }
 
     async run(): Promise<void> {
@@ -369,9 +381,9 @@ class CommitPlugin extends ControllerPlugin {
             Nodehash: this.nodehash,
             Owner: this.owner,
             Salt: this.salt,
-            Duration: (this.duration + " seconds (informational)"),
+            Duration: this.duration + " seconds (informational)",
             Fee: ethers.utils.formatEther(fee) + " (informational)",
-            Commitment: commitment
+            Commitment: commitment,
         });
 
         await ethController.commit(commitment);
@@ -380,12 +392,11 @@ class CommitPlugin extends ControllerPlugin {
 cli.addPlugin("commit", CommitPlugin);
 
 class RevealPlugin extends ControllerPlugin {
-
     static getHelp(): Help {
         return {
-           name: "reveal NAME",
-           help: "Reveal a previous pre-commitment"
-        }
+            name: "reveal NAME",
+            help: "Reveal a previous pre-commitment",
+        };
     }
 
     async run(): Promise<void> {
@@ -398,12 +409,12 @@ class RevealPlugin extends ControllerPlugin {
             Nodehash: this.nodehash,
             Owner: this.owner,
             Salt: this.salt,
-            Duration: (this.duration + " seconds"),
+            Duration: this.duration + " seconds",
             Fee: ethers.utils.formatEther(fee),
         });
 
         await ethController.register(this.label, this.owner, this.duration, this.salt, {
-            value: fee.mul(11).div(10)
+            value: fee.mul(11).div(10),
         });
     }
 }
@@ -454,11 +465,11 @@ abstract class AddressAccountPlugin extends AccountPlugin {
     address: string;
 
     static getOptionHelp(): Array<Help> {
-        return [ 
+        return [
             {
                 name: "[ --address ADDRESS ]",
-                help: "Specify another address"
-            }
+                help: "Specify another address",
+            },
         ];
     }
 
@@ -479,20 +490,19 @@ abstract class AddressAccountPlugin extends AccountPlugin {
 }
 
 class SetControllerPlugin extends AddressAccountPlugin {
-
     static getHelp(): Help {
         return {
-           name: "set-controller NAME",
-           help: "Set the controller (default: current account)"
-        }
+            name: "set-controller NAME",
+            help: "Set the controller (default: current account)",
+        };
     }
 
     async run(): Promise<void> {
         await super.run();
 
         this.dump("Set Subnode: " + this.name, {
-            "Nodehash": this.nodehash,
-            "Owner": this.address
+            Nodehash: this.nodehash,
+            Owner: this.address,
         });
 
         this.getEns().setOwner(this.nodehash, this.address);
@@ -506,9 +516,9 @@ class SetSubnodePlugin extends AddressAccountPlugin {
 
     static getHelp(): Help {
         return {
-           name: "set-subnode NAME",
-           help: "Set a subnode owner (default: current account)"
-        }
+            name: "set-subnode NAME",
+            help: "Set a subnode owner (default: current account)",
+        };
     }
 
     async _setValue(key: string, value: string): Promise<void> {
@@ -524,12 +534,16 @@ class SetSubnodePlugin extends AddressAccountPlugin {
         await super.run();
 
         this.dump("Set Subnode: " + this.name, {
-            "Label": this.label,
-            "Node": this.node,
-            "Owner": this.address
+            Label: this.label,
+            Node: this.node,
+            Owner: this.address,
         });
 
-        await this.getEns().setSubnodeOwner(ethers.utils.namehash(this.node), ethers.utils.id(this.label), this.address);
+        await this.getEns().setSubnodeOwner(
+            ethers.utils.namehash(this.node),
+            ethers.utils.id(this.label),
+            this.address,
+        );
     }
 }
 cli.addPlugin("set-subnode", SetSubnodePlugin);
@@ -537,9 +551,9 @@ cli.addPlugin("set-subnode", SetSubnodePlugin);
 class SetResolverPlugin extends AddressAccountPlugin {
     static getHelp(): Help {
         return {
-           name: "set-resolver NAME",
-           help: "Set the resolver (default: resolver.eth)"
-        }
+            name: "set-resolver NAME",
+            help: "Set the resolver (default: resolver.eth)",
+        };
     }
 
     getDefaultAddress(): Promise<string> {
@@ -550,8 +564,8 @@ class SetResolverPlugin extends AddressAccountPlugin {
         await super.run();
 
         this.dump("Set Resolver: " + this.name, {
-            "Nodehash": this.nodehash,
-            "Resolver": this.address
+            Nodehash: this.nodehash,
+            Resolver: this.address,
         });
 
         await this.getEns().setResolver(this.nodehash, this.address);
@@ -560,20 +574,19 @@ class SetResolverPlugin extends AddressAccountPlugin {
 cli.addPlugin("set-resolver", SetResolverPlugin);
 
 class SetAddrPlugin extends AddressAccountPlugin {
-
     static getHelp(): Help {
         return {
-           name: "set-addr NAME",
-           help: "Set the addr record (default: current account)"
-        }
+            name: "set-addr NAME",
+            help: "Set the addr record (default: current account)",
+        };
     }
 
     async run(): Promise<void> {
         await super.run();
 
         this.dump("Set Addr: " + this.name, {
-            "Nodehash": this.nodehash,
-            "Address": this.address
+            Nodehash: this.nodehash,
+            Address: this.address,
         });
 
         let resolver = await this.getResolver(this.nodehash);
@@ -583,12 +596,11 @@ class SetAddrPlugin extends AddressAccountPlugin {
 cli.addPlugin("set-addr", SetAddrPlugin);
 
 class SetNamePlugin extends AddressAccountPlugin {
-
     static getHelp(): Help {
         return {
-           name: "set-name NAME",
-           help: "Set the reverse name record (default: current account)"
-        }
+            name: "set-name NAME",
+            help: "Set the reverse name record (default: current account)",
+        };
     }
 
     async run(): Promise<void> {
@@ -597,8 +609,8 @@ class SetNamePlugin extends AddressAccountPlugin {
         const nodehash = ethers.utils.namehash(this.address.substring(2) + ".addr.reverse");
 
         this.dump("Set Name: " + this.name, {
-            "Nodehash": nodehash,
-            "Address": this.address
+            Nodehash: nodehash,
+            Address: this.address,
         });
 
         let resolver = await this.getResolver(nodehash);
@@ -621,7 +633,7 @@ abstract class TextAccountPlugin extends AccountPlugin {
         this.dump("Set " + this.getHeader() + ": " + this.name, {
             Nodehash: this.nodehash,
             Key: key,
-            Value: value
+            Value: value,
         });
 
         let resolver = await this.getResolver(this.nodehash);
@@ -635,14 +647,20 @@ class SetTextPlugin extends TextAccountPlugin {
 
     static getHelp(): Help {
         return {
-           name: "set-text NAME KEY VALUE",
-           help: "Set a text record"
-        }
+            name: "set-text NAME KEY VALUE",
+            help: "Set a text record",
+        };
     }
 
-    getHeader(): string { return "Test" }
-    getKey(): string { return this.key; }
-    getValue(): string { return this.value; }
+    getHeader(): string {
+        return "Test";
+    }
+    getKey(): string {
+        return this.key;
+    }
+    getValue(): string {
+        return this.value;
+    }
 }
 cli.addPlugin("set-text", SetTextPlugin);
 
@@ -651,14 +669,20 @@ class SetEmailPlugin extends TextAccountPlugin {
 
     static getHelp(): Help {
         return {
-           name: "set-email NAME EMAIL",
-           help: "Set the email text record"
-        }
+            name: "set-email NAME EMAIL",
+            help: "Set the email text record",
+        };
     }
 
-    getHeader(): string { return "E-mail" }
-    getKey(): string { return "email"; }
-    getValue(): string { return this.email; }
+    getHeader(): string {
+        return "E-mail";
+    }
+    getKey(): string {
+        return "email";
+    }
+    getValue(): string {
+        return this.email;
+    }
 }
 cli.addPlugin("set-email", SetEmailPlugin);
 
@@ -667,14 +691,20 @@ class SetWebsitePlugin extends TextAccountPlugin {
 
     static getHelp(): Help {
         return {
-           name: "set-website NAME URL",
-           help: "Set the website text record"
-        }
+            name: "set-website NAME URL",
+            help: "Set the website text record",
+        };
     }
 
-    getHeader(): string { return "Website" }
-    getKey(): string { return "url"; }
-    getValue(): string { return this.url; }
+    getHeader(): string {
+        return "Website";
+    }
+    getKey(): string {
+        return "url";
+    }
+    getValue(): string {
+        return this.url;
+    }
 }
 
 cli.addPlugin("set-website", SetWebsitePlugin);
@@ -685,9 +715,9 @@ class SetContentPlugin extends AccountPlugin {
 
     static getHelp(): Help {
         return {
-           name: "set-content NAME HASH",
-           help: "Set the IPFS Content Hash"
-        }
+            name: "set-content NAME HASH",
+            help: "Set the IPFS Content Hash",
+        };
     }
 
     async _setValue(key: string, value: string): Promise<void> {
@@ -697,7 +727,7 @@ class SetContentPlugin extends AccountPlugin {
                 this.throwError("Unsupported IPFS hash");
             }
 
-            let multihash = ethers.utils.concat([ "0xe3010170", bytes ]);
+            let multihash = ethers.utils.concat(["0xe3010170", bytes]);
             await super._setValue("multihash", ethers.utils.hexlify(multihash));
         }
         await super._setValue(key, value);
@@ -708,7 +738,7 @@ class SetContentPlugin extends AccountPlugin {
 
         this.dump("Set Content Hash: " + this.name, {
             Nodehash: this.nodehash,
-            "Content Hash": this.hash
+            "Content Hash": this.hash,
         });
 
         let resolver = await this.getResolver(this.nodehash);
@@ -724,9 +754,9 @@ class MigrateRegistrarPlugin extends AccountPlugin {
 
     static getHelp(): Help {
         return {
-           name: "migrate-registrar NAME",
-           help: "Migrate from the Legacy to the Permanent Registrar"
-        }
+            name: "migrate-registrar NAME",
+            help: "Migrate from the Legacy to the Permanent Registrar",
+        };
     }
 
     async prepareArgs(args: Array<string>): Promise<void> {
@@ -764,9 +794,9 @@ class MigrateRegistrarPlugin extends AccountPlugin {
         await super.run();
 
         this.dump("Migrate Registrar: " + this.name, {
-            "Nodehash": this.nodehash,
-            "Highest Bid": (ethers.utils.formatEther(this.highestBid) + " ether"),
-            "Deed Value": (ethers.utils.formatEther(this.deedValue) + " ether"),
+            Nodehash: this.nodehash,
+            "Highest Bid": ethers.utils.formatEther(this.highestBid) + " ether",
+            "Deed Value": ethers.utils.formatEther(this.deedValue) + " ether",
         });
 
         let legacyRegistrar = await this.getEthLegacyRegistrar();
@@ -783,9 +813,9 @@ class TransferPlugin extends AccountPlugin {
 
     static getHelp(): Help {
         return {
-           name: "transfer NAME NEW_OWNER",
-           help: "Transfer registrant ownership"
-        }
+            name: "transfer NAME NEW_OWNER",
+            help: "Transfer registrant ownership",
+        };
     }
 
     async _setValue(key: string, value: string): Promise<void> {
@@ -823,9 +853,9 @@ class ReclaimPlugin extends AddressAccountPlugin {
 
     static getHelp(): Help {
         return {
-           name: "reclaim NAME",
-           help: "Reset the controller by the registrant"
-        }
+            name: "reclaim NAME",
+            help: "Reset the controller by the registrant",
+        };
     }
 
     async _setValue(key: string, value: string): Promise<void> {
@@ -858,8 +888,8 @@ class ReclaimPlugin extends AddressAccountPlugin {
         await super.run();
 
         this.dump("Reclaim: " + this.name, {
-            "Nodehash": this.nodehash,
-            "Address": this.address,
+            Nodehash: this.nodehash,
+            Address: this.address,
         });
 
         let registrar = await this.getEthRegistrar();
@@ -870,17 +900,18 @@ cli.addPlugin("reclaim", ReclaimPlugin);
 
 function zpad(value: number, length: number): string {
     let v = String(value);
-    while (v.length < length) { v = "0" + v; }
+    while (v.length < length) {
+        v = "0" + v;
+    }
     return v;
 }
 
 function formatDate(date: Date): string {
-    const count = Math.round((date.getTime() - (new Date()).getTime()) / (24 * 60 * 60 * 1000))
-    return [
-        date.getFullYear(),
-        zpad(date.getMonth() + 1, 2),
-        zpad(date.getDate(), 2)
-    ].join("-") + ` (${ count } days from now)`;
+    const count = Math.round((date.getTime() - new Date().getTime()) / (24 * 60 * 60 * 1000));
+    return (
+        [date.getFullYear(), zpad(date.getMonth() + 1, 2), zpad(date.getDate(), 2)].join("-") +
+        ` (${count} days from now)`
+    );
 }
 
 class RenewPlugin extends EnsPlugin {
@@ -892,20 +923,20 @@ class RenewPlugin extends EnsPlugin {
 
     static getHelp(): Help {
         return {
-           name: "renew NAME [ NAME ... ]",
-           help: "Reset the controller by the registrant"
-        }
+            name: "renew NAME [ NAME ... ]",
+            help: "Reset the controller by the registrant",
+        };
     }
 
     static getOptionHelp(): Array<Help> {
         return [
             {
                 name: "[ --duration DAYS ]",
-                help: "Register duration (default: 365 days)"
+                help: "Register duration (default: 365 days)",
             },
             {
                 name: "[ --until YYYY-MM-DD ]",
-                help: "Register until date"
+                help: "Register until date",
             },
         ];
     }
@@ -923,7 +954,7 @@ class RenewPlugin extends EnsPlugin {
             this.throwError("date out of range");
         }
 
-        const endDate = (new Date(year, month - 1, day)).getTime() / 1000;
+        const endDate = new Date(year, month - 1, day).getTime() / 1000;
 
         return Math.ceil(endDate - startDate);
     }
@@ -935,7 +966,7 @@ class RenewPlugin extends EnsPlugin {
             this.throwError("new requires ONE account");
         }
 
-        const timespans = argParser.consumeMultiOptions([ "duration", "until" ]);
+        const timespans = argParser.consumeMultiOptions(["duration", "until"]);
 
         if (timespans.length === 1) {
             const timespan = timespans.pop();
@@ -953,11 +984,11 @@ class RenewPlugin extends EnsPlugin {
 
     async prepareArgs(args: Array<string>): Promise<void> {
         await super.prepareArgs(args);
-        const labels: Array<string> = [ ];
+        const labels: Array<string> = [];
         args.forEach((arg) => {
             const comps = arg.split(".");
             if (comps.length !== 2 || comps[1] !== "eth") {
-                this.throwError(`name not supported ${ JSON.stringify(arg) }`);
+                this.throwError(`name not supported ${JSON.stringify(arg)}`);
             }
             labels.push(comps[0]);
         });
@@ -977,25 +1008,25 @@ class RenewPlugin extends EnsPlugin {
 
             const expiration = (await ethRegistrar.nameExpires(ethers.utils.id(label))).toNumber();
             if (expiration === 0) {
-                this.throwError(`not registered: ${ label }`);
+                this.throwError(`not registered: ${label}`);
             }
 
-            const duration = this.duration ? this.duration: this.getDuration(expiration, this.until);
+            const duration = this.duration ? this.duration : this.getDuration(expiration, this.until);
             if (duration < 0) {
-                this.throwError(`bad duration: ${ duration }`);
+                this.throwError(`bad duration: ${duration}`);
             }
 
             const fee = (await ethController.rentPrice(label, duration)).mul(11).div(10);
 
-            this.dump(`Renew: ${ label }.eth`, {
+            this.dump(`Renew: ${label}.eth`, {
                 "Current Expiry": formatDate(new Date(expiration * 1000)),
-                "Duration":       `${ (duration / (24 * 60 * 60)) } days`,
-                "Until":          formatDate(new Date((expiration + duration) * 1000)),
-                "Fee":            `${ ethers.utils.formatEther(fee) } (+10% buffer)`,
+                Duration: `${duration / (24 * 60 * 60)} days`,
+                Until: formatDate(new Date((expiration + duration) * 1000)),
+                Fee: `${ethers.utils.formatEther(fee)} (+10% buffer)`,
             });
 
             await ethController.renew(label, duration, {
-                value: fee
+                value: fee,
             });
         }
     }
@@ -1023,4 +1054,4 @@ cli.addPlugin("renew", RenewPlugin);
  *    reclaim NAME --address OWNER
  */
 
-cli.run(process.argv.slice(2))
+cli.run(process.argv.slice(2));
