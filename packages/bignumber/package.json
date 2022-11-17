@@ -1,8 +1,8 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/logger": "workspace:^",
     "bn.js": "^5.2.1"
   },
   "description": "BigNumber library used in ethers.js.",

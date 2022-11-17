@@ -1,6 +1,6 @@
 {
   "_devDependencies": {
-    "@ethersproject/cli": "^5.0.0",
+    "@ethersproject/cli": "workspace:^",
     "@types/bip39": "2.4.1",
     "@types/bitcoinjs-lib": "3.3.2",
     "bip39": "2.5.0",
@@ -16,10 +16,10 @@
     "./lib/disk-utils": "./lib/browser-disk-utils.js"
   },
   "dependencies": {
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/keccak256": "^5.7.0",
-    "@ethersproject/strings": "^5.7.0",
+    "@ethersproject/bignumber": "workspace:^",
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/keccak256": "workspace:^",
+    "@ethersproject/strings": "workspace:^",
     "ethers": "^5.7.0",
     "tiny-inflate": "1.0.3"
   },

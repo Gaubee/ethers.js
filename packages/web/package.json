@@ -7,11 +7,11 @@
     "./lib/geturl": "./lib/browser-geturl.js"
   },
   "dependencies": {
-    "@ethersproject/base64": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/strings": "^5.7.0"
+    "@ethersproject/base64": "workspace:^",
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/logger": "workspace:^",
+    "@ethersproject/properties": "workspace:^",
+    "@ethersproject/strings": "workspace:^"
   },
   "description": "Utility fucntions for managing web requests for ethers.",
   "ethereum": "donations.ethers.eth",

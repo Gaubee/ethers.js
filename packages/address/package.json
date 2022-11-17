@@ -1,11 +1,11 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/keccak256": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/rlp": "^5.7.0"
+    "@ethersproject/bignumber": "workspace:^",
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/keccak256": "workspace:^",
+    "@ethersproject/logger": "workspace:^",
+    "@ethersproject/rlp": "workspace:^"
   },
   "description": "Utilities for handling Ethereum Addresses for ethers.",
   "ethereum": "donations.ethers.eth",

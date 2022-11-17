@@ -1,7 +1,7 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/logger": "^5.7.0"
+    "@ethersproject/logger": "workspace:^"
   },
   "description": "Properties utility functions for ethers.",
   "ethereum": "donations.ethers.eth",

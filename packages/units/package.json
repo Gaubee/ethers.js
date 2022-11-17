@@ -1,9 +1,9 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/constants": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0"
+    "@ethersproject/bignumber": "workspace:^",
+    "@ethersproject/constants": "workspace:^",
+    "@ethersproject/logger": "workspace:^"
   },
   "description": "Unit conversion functions for Ethereum.",
   "ethereum": "donations.ethers.eth",

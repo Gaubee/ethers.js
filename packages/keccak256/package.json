@@ -1,7 +1,7 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
+    "@ethersproject/bytes": "workspace:^",
     "js-sha3": "0.8.0"
   },
   "description": "The keccak256 hash function for ethers.",

@@ -1,8 +1,8 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/cli": "^5.7.0",
-    "@ethersproject/testcases": "^5.7.0",
+    "@ethersproject/cli": "workspace:^",
+    "@ethersproject/testcases": "workspace:^",
     "@types/mocha": "^5.2.0",
     "ethers": "^5.7.0"
   },

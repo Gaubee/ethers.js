@@ -3,10 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Logger = exports.ErrorCode = exports.LogLevel = void 0;
 var _permanentCensorErrors = false;
 var _censorErrors = false;
-var LogLevels = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+var LogLevels = { debug: 1, default: 2, info: 2, warning: 3, error: 4, off: 5 };
 var _logLevel = LogLevels["default"];
 var _version_1 = require("./_version");
-var _globalLogger = null;
+var _globalLogger;
 function _checkNormalize() {
     try {
         var missing_1 = [];
@@ -16,7 +16,6 @@ function _checkNormalize() {
                 if ("test".normalize(form) !== "test") {
                     throw new Error("bad normalize");
                 }
-                ;
             }
             catch (error) {
                 missing_1.push(form);
@@ -122,15 +121,10 @@ var ErrorCode;
     // a transaction
     ErrorCode["ACTION_REJECTED"] = "ACTION_REJECTED";
 })(ErrorCode = exports.ErrorCode || (exports.ErrorCode = {}));
-;
 var HEX = "0123456789abcdef";
 var Logger = /** @class */ (function () {
     function Logger(version) {
-        Object.defineProperty(this, "version", {
-            enumerable: true,
-            value: version,
-            writable: false
-        });
+        this.version = version;
     }
     Logger.prototype._log = function (logLevel, args) {
         var level = logLevel.toLowerCase();
@@ -229,7 +223,7 @@ var Logger = /** @class */ (function () {
                 break;
         }
         if (url) {
-            message += " [ See: https:/\/links.ethers.org/v5-errors-" + url + " ]";
+            message += " [ See: https://links.ethers.org/v5-errors-" + url + " ]";
         }
         if (messageDetails.length) {
             message += " (" + messageDetails.join(", ") + ")";
@@ -249,7 +243,7 @@ var Logger = /** @class */ (function () {
     Logger.prototype.throwArgumentError = function (message, name, value) {
         return this.throwError(message, Logger.errors.INVALID_ARGUMENT, {
             argument: name,
-            value: value
+            value: value,
         });
     };
     Logger.prototype.assert = function (condition, message, code, params) {
@@ -270,12 +264,13 @@ var Logger = /** @class */ (function () {
         }
         if (_normalizeError) {
             this.throwError("platform missing String.prototype.normalize", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError
+                operation: "String.prototype.normalize",
+                form: _normalizeError,
             });
         }
     };
     Logger.prototype.checkSafeUint53 = function (value, message) {
-        if (typeof (value) !== "number") {
+        if (typeof value !== "number") {
             return;
         }
         if (message == null) {
@@ -285,14 +280,14 @@ var Logger = /** @class */ (function () {
             this.throwError(message, Logger.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
-                value: value
+                value: value,
             });
         }
         if (value % 1) {
             this.throwError(message, Logger.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
-                value: value
+                value: value,
             });
         }
     };
@@ -306,13 +301,13 @@ var Logger = /** @class */ (function () {
         if (count < expectedCount) {
             this.throwError("missing argument" + message, Logger.errors.MISSING_ARGUMENT, {
                 count: count,
-                expectedCount: expectedCount
+                expectedCount: expectedCount,
             });
         }
         if (count > expectedCount) {
             this.throwError("too many arguments" + message, Logger.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
-                expectedCount: expectedCount
+                expectedCount: expectedCount,
             });
         }
     };
@@ -330,15 +325,12 @@ var Logger = /** @class */ (function () {
         }
     };
     Logger.globalLogger = function () {
-        if (!_globalLogger) {
-            _globalLogger = new Logger(_version_1.version);
-        }
-        return _globalLogger;
+        return (_globalLogger !== null && _globalLogger !== void 0 ? _globalLogger : (_globalLogger = new Logger(_version_1.version)));
     };
     Logger.setCensorship = function (censorship, permanent) {
         if (!censorship && permanent) {
             this.globalLogger().throwError("cannot permanently disable censorship", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "setCensorship"
+                operation: "setCensorship",
             });
         }
         if (_permanentCensorErrors) {
@@ -346,7 +338,7 @@ var Logger = /** @class */ (function () {
                 return;
             }
             this.globalLogger().throwError("error censorship permanent", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "setCensorship"
+                operation: "setCensorship",
             });
         }
         _censorErrors = !!censorship;

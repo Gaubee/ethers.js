@@ -1,16 +1,16 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/abi": "^5.7.0",
-    "@ethersproject/abstract-provider": "^5.7.0",
-    "@ethersproject/abstract-signer": "^5.7.0",
-    "@ethersproject/address": "^5.7.0",
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/constants": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/transactions": "^5.7.0"
+    "@ethersproject/abi": "workspace:^",
+    "@ethersproject/abstract-provider": "workspace:^",
+    "@ethersproject/abstract-signer": "workspace:^",
+    "@ethersproject/address": "workspace:^",
+    "@ethersproject/bignumber": "workspace:^",
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/constants": "workspace:^",
+    "@ethersproject/logger": "workspace:^",
+    "@ethersproject/properties": "workspace:^",
+    "@ethersproject/transactions": "workspace:^"
   },
   "description": "Contract abstraction meta-class for ethers.",
   "ethereum": "donations.ethers.eth",

@@ -7,7 +7,7 @@
     "./lib/base64": "./lib/browser-base64.js"
   },
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0"
+    "@ethersproject/bytes": "workspace:^"
   },
   "description": "Base64 coder.",
   "ethereum": "donations.ethers.eth",

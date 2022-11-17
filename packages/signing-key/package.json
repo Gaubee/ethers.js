@@ -4,9 +4,9 @@
   },
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/logger": "workspace:^",
+    "@ethersproject/properties": "workspace:^",
     "bn.js": "^5.2.1",
     "elliptic": "6.5.4",
     "hash.js": "1.1.7"

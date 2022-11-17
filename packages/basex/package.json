@@ -1,8 +1,8 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0"
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/properties": "workspace:^"
   },
   "description": "Base-X without Buffer.",
   "ethereum": "donations.ethers.eth",

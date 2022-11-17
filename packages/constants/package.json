@@ -1,7 +1,7 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bignumber": "^5.7.0"
+    "@ethersproject/bignumber": "workspace:^"
   },
   "description": "Common Ethereum constants used for ethers.",
   "ethereum": "donations.ethers.eth",

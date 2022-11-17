@@ -7,11 +7,11 @@
   },
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/hash": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/strings": "^5.7.0"
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/hash": "workspace:^",
+    "@ethersproject/logger": "workspace:^",
+    "@ethersproject/properties": "workspace:^",
+    "@ethersproject/strings": "workspace:^"
   },
   "description": "Word lists for BIP39 wallets.",
   "ethereum": "donations.ethers.eth",

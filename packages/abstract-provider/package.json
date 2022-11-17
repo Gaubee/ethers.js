@@ -1,13 +1,13 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bignumber": "^5.7.0",
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0",
-    "@ethersproject/networks": "^5.7.0",
-    "@ethersproject/properties": "^5.7.0",
-    "@ethersproject/transactions": "^5.7.0",
-    "@ethersproject/web": "^5.7.0"
+    "@ethersproject/bignumber": "workspace:^",
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/logger": "workspace:^",
+    "@ethersproject/networks": "workspace:^",
+    "@ethersproject/properties": "workspace:^",
+    "@ethersproject/transactions": "workspace:^",
+    "@ethersproject/web": "workspace:^"
   },
   "description": "An Abstract Class for describing an Ethereum Provider for ethers.",
   "ethereum": "donations.ethers.eth",

@@ -1,6 +1,6 @@
 "use strict";
 
-import aes from "aes-js";
+import { cbc128 } from "./cbc";
 
 import { ExternallyOwnedAccount } from "@ethersproject/abstract-signer";
 import { getAddress } from "@ethersproject/address";
@@ -37,7 +37,7 @@ export class CrowdsaleAccount extends Description<_CrowdsaleAccount> implements 
 }
 
 // See: https://github.com/ethereum/pyethsaletool
-export function decrypt(json: string, password: Bytes | string): ExternallyOwnedAccount {
+export async function decrypt(json: string, password: Bytes | string): Promise<ExternallyOwnedAccount> {
     const data = JSON.parse(json);
 
     password = getPassword(password);
@@ -47,7 +47,7 @@ export function decrypt(json: string, password: Bytes | string): ExternallyOwned
 
     // Encrypted Seed
     const encseed = looseArrayify(searchPath(data, "encseed"));
-    if (!encseed || (encseed.length % 16) !== 0) {
+    if (!encseed || encseed.length % 16 !== 0) {
         logger.throwArgumentError("invalid encseed", "json", json);
     }
 
@@ -57,8 +57,7 @@ export function decrypt(json: string, password: Bytes | string): ExternallyOwned
     const encryptedSeed = encseed.slice(16);
 
     // Decrypt the seed
-    const aesCbc = new aes.ModeOfOperation.cbc(key, iv);
-    const seed = aes.padding.pkcs7.strip(arrayify(aesCbc.decrypt(encryptedSeed)));
+    const seed = await cbc128.decrypt(key, iv, encryptedSeed);
 
     // This wallet format is weird... Convert the binary encoded hex to a string.
     let seedHex = "";
@@ -70,10 +69,9 @@ export function decrypt(json: string, password: Bytes | string): ExternallyOwned
 
     const privateKey = keccak256(seedHexBytes);
 
-    return new CrowdsaleAccount ({
+    return new CrowdsaleAccount({
         _isCrowdsaleAccount: true,
         address: ethaddr,
-        privateKey: privateKey
+        privateKey: privateKey,
     });
 }
-

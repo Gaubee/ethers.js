@@ -1,7 +1,9 @@
+import { ProgressCallback } from "./scrypt";
 import { ExternallyOwnedAccount } from "@ethersproject/abstract-signer";
 import { Bytes, BytesLike } from "@ethersproject/bytes";
 import { Mnemonic } from "@ethersproject/hdnode";
 import { Description } from "@ethersproject/properties";
+export { ProgressCallback };
 export interface _KeystoreAccount {
     address: string;
     privateKey: string;
@@ -15,7 +17,6 @@ export declare class KeystoreAccount extends Description<_KeystoreAccount> imple
     readonly _isKeystoreAccount: boolean;
     isKeystoreAccount(value: any): value is KeystoreAccount;
 }
-export declare type ProgressCallback = (percent: number) => void;
 export declare type EncryptOptions = {
     iv?: BytesLike;
     entropy?: BytesLike;
@@ -28,7 +29,6 @@ export declare type EncryptOptions = {
         p?: number;
     };
 };
-export declare function decryptSync(json: string, password: Bytes | string): KeystoreAccount;
 export declare function decrypt(json: string, password: Bytes | string, progressCallback?: ProgressCallback): Promise<KeystoreAccount>;
 export declare function encrypt(account: ExternallyOwnedAccount, password: Bytes | string, options?: EncryptOptions, progressCallback?: ProgressCallback): Promise<string>;
 //# sourceMappingURL=keystore.d.ts.map

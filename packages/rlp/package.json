@@ -1,8 +1,8 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0"
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/logger": "workspace:^"
   },
   "description": "Recursive-Length Prefix (RLP) coder.",
   "ethereum": "donations.ethers.eth",

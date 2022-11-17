@@ -1,9 +1,9 @@
 {
   "author": "Richard Moore <me@ricmoo.com>",
   "dependencies": {
-    "@ethersproject/bytes": "^5.7.0",
-    "@ethersproject/constants": "^5.7.0",
-    "@ethersproject/logger": "^5.7.0"
+    "@ethersproject/bytes": "workspace:^",
+    "@ethersproject/constants": "workspace:^",
+    "@ethersproject/logger": "workspace:^"
   },
   "description": "String utility functions.",
   "ethereum": "donations.ethers.eth",

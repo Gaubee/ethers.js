@@ -3,24 +3,24 @@
 let _permanentCensorErrors = false;
 let _censorErrors = false;
 
-const LogLevels: { [ name: string ]: number } = { debug: 1, "default": 2, info: 2, warning: 3, error: 4, off: 5 };
+const LogLevels: { [name: string]: number } = { debug: 1, default: 2, info: 2, warning: 3, error: 4, off: 5 };
 let _logLevel = LogLevels["default"];
 
 import { version } from "./_version";
 
-let _globalLogger: Logger = null;
+let _globalLogger: Logger | undefined;
 
 function _checkNormalize(): string {
     try {
-        const missing: Array<string> = [ ];
+        const missing: Array<string> = [];
 
         // Make sure all forms of normalization are supported
         ["NFD", "NFC", "NFKD", "NFKC"].forEach((form) => {
             try {
                 if ("test".normalize(form) !== "test") {
                     throw new Error("bad normalize");
-                };
-            } catch(error) {
+                }
+            } catch (error) {
                 missing.push(form);
             }
         });
@@ -30,7 +30,7 @@ function _checkNormalize(): string {
         }
 
         if (String.fromCharCode(0xe9).normalize("NFD") !== String.fromCharCode(0x65, 0x0301)) {
-            throw new Error("broken implementation")
+            throw new Error("broken implementation");
         }
     } catch (error) {
         return error.message;
@@ -42,16 +42,14 @@ function _checkNormalize(): string {
 const _normalizeError = _checkNormalize();
 
 export enum LogLevel {
-    DEBUG    = "DEBUG",
-    INFO     = "INFO",
-    WARNING  = "WARNING",
-    ERROR    = "ERROR",
-    OFF      = "OFF"
+    DEBUG = "DEBUG",
+    INFO = "INFO",
+    WARNING = "WARNING",
+    ERROR = "ERROR",
+    OFF = "OFF",
 }
 
-
 export enum ErrorCode {
-
     ///////////////////
     // Generic Errors
 
@@ -86,7 +84,6 @@ export enum ErrorCode {
     //   - fault: the reason this faulted
     NUMERIC_FAULT = "NUMERIC_FAULT",
 
-
     ///////////////////
     // Argument Errors
 
@@ -108,7 +105,6 @@ export enum ErrorCode {
     //   - count: The number of arguments received
     //   - expectedCount: The number of arguments expected
     UNEXPECTED_ARGUMENT = "UNEXPECTED_ARGUMENT",
-
 
     ///////////////////
     // Blockchain Errors
@@ -147,38 +143,31 @@ export enum ErrorCode {
     //   - receipt: the receipt of the replacement
     TRANSACTION_REPLACED = "TRANSACTION_REPLACED",
 
-
     ///////////////////
     // Interaction Errors
 
     // The user rejected the action, such as signing a message or sending
     // a transaction
     ACTION_REJECTED = "ACTION_REJECTED",
-};
+}
 
 const HEX = "0123456789abcdef";
 
 export class Logger {
-    readonly version: string;
-
     static errors = ErrorCode;
 
     static levels = LogLevel;
 
-    constructor(version: string) {
-        Object.defineProperty(this, "version", {
-            enumerable: true,
-            value: version,
-            writable: false
-        });
-    }
+    constructor(readonly version: string) {}
 
     _log(logLevel: LogLevel, args: Array<any>): void {
         const level = logLevel.toLowerCase();
         if (LogLevels[level] == null) {
             this.throwArgumentError("invalid log level name", "logLevel", logLevel);
         }
-        if (_logLevel > LogLevels[level]) { return; }
+        if (_logLevel > LogLevels[level]) {
+            return;
+        }
         console.log.apply(console, args);
     }
 
@@ -197,11 +186,15 @@ export class Logger {
     makeError(message: string, code?: ErrorCode, params?: any): Error {
         // Errors are being censored
         if (_censorErrors) {
-            return this.makeError("censored error", code, { });
+            return this.makeError("censored error", code, {});
         }
 
-        if (!code) { code = Logger.errors.UNKNOWN_ERROR; }
-        if (!params) { params = {}; }
+        if (!code) {
+            code = Logger.errors.UNKNOWN_ERROR;
+        }
+        if (!params) {
+            params = {};
+        }
 
         const messageDetails: Array<string> = [];
         Object.keys(params).forEach((key) => {
@@ -210,8 +203,8 @@ export class Logger {
                 if (value instanceof Uint8Array) {
                     let hex = "";
                     for (let i = 0; i < value.length; i++) {
-                      hex += HEX[value[i] >> 4];
-                      hex += HEX[value[i] & 0x0f];
+                        hex += HEX[value[i] >> 4];
+                        hex += HEX[value[i] & 0x0f];
                     }
                     messageDetails.push(key + "=Uint8Array(0x" + hex + ")");
                 } else {
@@ -221,8 +214,8 @@ export class Logger {
                 messageDetails.push(key + "=" + JSON.stringify(params[key].toString()));
             }
         });
-        messageDetails.push(`code=${ code }`);
-        messageDetails.push(`version=${ this.version }`);
+        messageDetails.push(`code=${code}`);
+        messageDetails.push(`version=${this.version}`);
 
         const reason = message;
 
@@ -234,10 +227,13 @@ export class Logger {
                 const fault = message;
 
                 switch (fault) {
-                    case "overflow": case "underflow": case "division-by-zero":
+                    case "overflow":
+                    case "underflow":
+                    case "division-by-zero":
                         url += "-" + fault;
                         break;
-                    case "negative-power": case "negative-width":
+                    case "negative-power":
+                    case "negative-width":
                         url += "-unsupported";
                         break;
                     case "unbound-bitwise-result":
@@ -258,7 +254,7 @@ export class Logger {
         }
 
         if (url) {
-            message += " [ See: https:/\/links.ethers.org/v5-errors-" + url + " ]";
+            message += " [ See: https://links.ethers.org/v5-errors-" + url + " ]";
         }
 
         if (messageDetails.length) {
@@ -268,9 +264,9 @@ export class Logger {
         // @TODO: Any??
         const error: any = new Error(message);
         error.reason = reason;
-        error.code = code
+        error.code = code;
 
-        Object.keys(params).forEach(function(key) {
+        Object.keys(params).forEach(function (key) {
             error[key] = params[key];
         });
 
@@ -284,39 +280,50 @@ export class Logger {
     throwArgumentError(message: string, name: string, value: any): never {
         return this.throwError(message, Logger.errors.INVALID_ARGUMENT, {
             argument: name,
-            value: value
+            value: value,
         });
     }
 
     assert(condition: any, message: string, code?: ErrorCode, params?: any): void {
-        if (!!condition) { return; }
+        if (!!condition) {
+            return;
+        }
         this.throwError(message, code, params);
     }
 
     assertArgument(condition: any, message: string, name: string, value: any): void {
-        if (!!condition) { return; }
+        if (!!condition) {
+            return;
+        }
         this.throwArgumentError(message, name, value);
     }
 
     checkNormalize(message?: string): void {
-        if (message == null) { message = "platform missing String.prototype.normalize"; }
+        if (message == null) {
+            message = "platform missing String.prototype.normalize";
+        }
         if (_normalizeError) {
             this.throwError("platform missing String.prototype.normalize", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "String.prototype.normalize", form: _normalizeError
+                operation: "String.prototype.normalize",
+                form: _normalizeError,
             });
         }
     }
 
     checkSafeUint53(value: number, message?: string): void {
-        if (typeof(value) !== "number") { return; }
+        if (typeof value !== "number") {
+            return;
+        }
 
-        if (message == null) { message = "value not safe"; }
+        if (message == null) {
+            message = "value not safe";
+        }
 
         if (value < 0 || value >= 0x1fffffffffffff) {
             this.throwError(message, Logger.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "out-of-safe-range",
-                value: value
+                value: value,
             });
         }
 
@@ -324,7 +331,7 @@ export class Logger {
             this.throwError(message, Logger.errors.NUMERIC_FAULT, {
                 operation: "checkSafeInteger",
                 fault: "non-integer",
-                value: value
+                value: value,
             });
         }
     }
@@ -339,14 +346,14 @@ export class Logger {
         if (count < expectedCount) {
             this.throwError("missing argument" + message, Logger.errors.MISSING_ARGUMENT, {
                 count: count,
-                expectedCount: expectedCount
+                expectedCount: expectedCount,
             });
         }
 
         if (count > expectedCount) {
             this.throwError("too many arguments" + message, Logger.errors.UNEXPECTED_ARGUMENT, {
                 count: count,
-                expectedCount: expectedCount
+                expectedCount: expectedCount,
             });
         }
     }
@@ -362,7 +369,7 @@ export class Logger {
             this.throwError(
                 "cannot instantiate abstract class " + JSON.stringify(kind.name) + " directly; use a sub-class",
                 Logger.errors.UNSUPPORTED_OPERATION,
-                { name: target.name, operation: "new" }
+                { name: target.name, operation: "new" },
             );
         } else if (target === Object || target == null) {
             this.throwError("missing new", Logger.errors.MISSING_NEW, { name: kind.name });
@@ -370,21 +377,26 @@ export class Logger {
     }
 
     static globalLogger(): Logger {
-        if (!_globalLogger) { _globalLogger = new Logger(version); }
-        return _globalLogger;
+        return (_globalLogger ??= new Logger(version));
     }
 
     static setCensorship(censorship: boolean, permanent?: boolean): void {
         if (!censorship && permanent) {
-            this.globalLogger().throwError("cannot permanently disable censorship", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "setCensorship"
-            });
+            this.globalLogger().throwError(
+                "cannot permanently disable censorship",
+                Logger.errors.UNSUPPORTED_OPERATION,
+                {
+                    operation: "setCensorship",
+                },
+            );
         }
 
         if (_permanentCensorErrors) {
-            if (!censorship) { return; }
+            if (!censorship) {
+                return;
+            }
             this.globalLogger().throwError("error censorship permanent", Logger.errors.UNSUPPORTED_OPERATION, {
-                operation: "setCensorship"
+                operation: "setCensorship",
             });
         }
 
